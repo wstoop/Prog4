@@ -1,24 +1,38 @@
-#include <string>
+#include <algorithm>
 #include "GameObject.h"
-#include "ResourceManager.h"
-#include "Renderer.h"
+#include "Components/Component.h"
+#include "Components/RenderComponent.h"
 
 dae::GameObject::~GameObject() = default;
 
-void dae::GameObject::Update(){}
+void dae::GameObject::Update()
+{
+    std::for_each(m_components.begin(), m_components.end(), [](const auto& component) {
+        component->Update();
+    });
+}
+
+void dae::GameObject::LateUpdate()
+{
+    std::for_each(m_components.begin(), m_components.end(), [](const auto& component) {
+        component->LateUpdate();
+    });
+}
+
+void dae::GameObject::FixedUpdate()
+{
+    std::for_each(m_components.begin(), m_components.end(), [](const auto& component) {
+        component->FixedUpdate();
+    });
+}
 
 void dae::GameObject::Render() const
 {
-	const auto& pos = m_transform.GetPosition();
-	Renderer::GetInstance().RenderTexture(*m_texture, pos.x, pos.y);
-}
-
-void dae::GameObject::SetTexture(const std::string& filename)
-{
-	m_texture = ResourceManager::GetInstance().LoadTexture(filename);
-}
-
-void dae::GameObject::SetPosition(float x, float y)
-{
-	m_transform.SetPosition(x, y, 0.0f);
+    for (const auto& component : m_components)
+    {
+        if (auto renderComp = std::dynamic_pointer_cast<RenderComponent>(component))
+        {
+            renderComp->Render();
+        }
+    }
 }

@@ -1,6 +1,6 @@
 #include <algorithm>
 #include "Scene.h"
-
+#include <assert.h>
 using namespace dae;
 
 void Scene::Add(std::unique_ptr<GameObject> object)
@@ -31,6 +31,22 @@ void Scene::Update()
 	for(auto& object : m_objects)
 	{
 		object->Update();
+	}
+}
+
+void Scene::LateUpdate()
+{
+	for (auto& object : m_objects)
+	{
+		object->LateUpdate();
+	}
+}
+
+void Scene::FixedUpdate()
+{
+	for (auto& object : m_objects)
+	{
+		object->FixedUpdate();
 	}
 }
 

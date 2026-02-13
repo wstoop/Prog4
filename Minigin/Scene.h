@@ -14,6 +14,9 @@ namespace dae
 		void RemoveAll();
 
 		void Update();
+		void LateUpdate();
+		void FixedUpdate();
+
 		void Render() const;
 
 		~Scene() = default;
