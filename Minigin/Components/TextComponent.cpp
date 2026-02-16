@@ -8,7 +8,7 @@
 #include "../GameObject.h"
 
 dae::TextComponent::TextComponent(const std::string& text, std::shared_ptr<Font> font, const SDL_Color& color)
-	: m_needsUpdate(true), m_text(text), m_color(color), m_font(std::move(font)), m_textTexture(nullptr)
+	: m_needsUpdate(true), m_text(text), m_color(color), m_font(std::move(font))
 {
 }
 
@@ -27,26 +27,8 @@ void dae::TextComponent::Update()
 			throw std::runtime_error(std::string("Create text texture from surface failed: ") + SDL_GetError());
 		}
 		SDL_DestroySurface(surf);
-		m_textTexture = std::make_shared<Texture2D>(texture);
+		m_Texture = std::make_shared<Texture2D>(texture);
 		m_needsUpdate = false;
-	}
-}
-
-void dae::TextComponent::Render() const
-{
-	if (m_textTexture != nullptr)
-	{
-		auto transformComp = GetOwner()->GetComponent<TransformComponent>();
-		float x = 0.0f;
-		float y = 0.0f;
-		if (transformComp)
-		{
-			const auto& pos = transformComp->GetTransform().GetPosition();
-			x = pos.x;
-			y = pos.y;
-		}
-
-		Renderer::GetInstance().RenderTexture(*m_textTexture, x, y);
 	}
 }
 

@@ -12,7 +12,6 @@ namespace dae
 	{
 	public:
 		void Update() override;
-		void Render() const override;
 
 		void SetText(const std::string& text);
 		void SetColor(const SDL_Color& color);
@@ -24,6 +23,5 @@ namespace dae
 		std::string m_text{};
 		SDL_Color m_color{ 255, 255, 255, 255 };
 		std::shared_ptr<Font> m_font{};
-		std::shared_ptr<Texture2D> m_textTexture{};
 	};
 }

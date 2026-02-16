@@ -14,7 +14,6 @@ namespace dae
         virtual void Update() {}
         virtual void LateUpdate() {}
         virtual void FixedUpdate() {}
-        virtual void Render() const {}
 
         
         GameObject* GetOwner() const { return m_owner; }

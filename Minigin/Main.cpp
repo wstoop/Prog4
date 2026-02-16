@@ -12,6 +12,7 @@
 #include "Components/TextComponent.h"
 #include "Components/TextureComponent.h"
 #include "Components/FPSComponent.h"
+#include "Components/RotateAndScaleComponent.h"
 #include "Scene.h"
 
 #include <filesystem>
@@ -30,6 +31,7 @@ static void load()
 
 	go = std::make_unique<dae::GameObject>();
 	go->AddComponent<dae::TransformComponent>()->SetPosition(358, 180);
+	go->AddComponent<dae::RotateAndScaleComponent>();
 	go->AddComponent<dae::TextureComponent>("logo.png");
 	scene.Add(std::move(go));
 

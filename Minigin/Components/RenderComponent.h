@@ -1,13 +1,18 @@
 #pragma once
+#include <memory>
 #include "Component.h"
 
 namespace dae
 {
+	class Texture2D;
+
 	class RenderComponent : public Component
 	{
 	public:
 		virtual ~RenderComponent() override = default;
 
-		virtual void Render() const override = 0;
+		void Render() const;
+	protected:
+		std::shared_ptr<Texture2D> m_Texture;
 	};
 }
