@@ -57,10 +57,10 @@ void PrintSDLVersion()
 }
 
 dae::Minigin::Minigin(const std::filesystem::path& dataPath)
-	: m_Renderer(Renderer::GetInstance())
-	, m_SceneManager(SceneManager::GetInstance())
-	, m_Input(InputManager::GetInstance())
-	, m_TimeManager(TimeManager::GetInstance())
+	: m_renderer(Renderer::GetInstance())
+	, m_sceneManager(SceneManager::GetInstance())
+	, m_input(InputManager::GetInstance())
+	, m_timeManager(TimeManager::GetInstance())
 {
 	PrintSDLVersion();
 	
@@ -96,7 +96,7 @@ dae::Minigin::~Minigin()
 void dae::Minigin::Run(const std::function<void()>& load)
 {
 	load();
-	m_LastTime = std::chrono::high_resolution_clock::now();
+	m_lastTime = std::chrono::high_resolution_clock::now();
 #ifndef __EMSCRIPTEN__
 	while (!m_quit)
 		RunOneFrame();
@@ -107,22 +107,22 @@ void dae::Minigin::Run(const std::function<void()>& load)
 
 void dae::Minigin::RunOneFrame()
 {
-	m_quit = !m_Input.ProcessInput();
+	m_quit = !m_input.ProcessInput();
 
 	const auto current_time = std::chrono::high_resolution_clock::now();
-	const float delta_time = std::chrono::duration<float>(current_time - m_LastTime).count();
-	m_TimeManager.SetDeltaTime(delta_time);
-	m_LastTime = current_time;
-	m_Lag += delta_time;
+	const float delta_time = std::chrono::duration<float>(current_time - m_lastTime).count();
+	m_timeManager.SetDeltaTime(delta_time);
+	m_lastTime = current_time;
+	m_lag += delta_time;
 
-	while (m_Lag >= m_FixedTimeStep)
+	while (m_lag >= m_fixedTimeStep)
 	{
-		m_SceneManager.FixedUpdate();
-		m_Lag -= m_FixedTimeStep;
+		m_sceneManager.FixedUpdate();
+		m_lag -= m_fixedTimeStep;
 	}
-	m_SceneManager.Update();
-	m_SceneManager.LateUpdate();
-	m_Renderer.Render();
+	m_sceneManager.Update();
+	m_sceneManager.LateUpdate();
+	m_renderer.Render();
 	constexpr int ms_per_frame = 1000 / 120;
 	const auto sleep_time = current_time + std::chrono::milliseconds(ms_per_frame) - std::chrono::high_resolution_clock::now();
 	std::this_thread::sleep_for(sleep_time);

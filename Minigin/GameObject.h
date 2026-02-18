@@ -14,20 +14,25 @@ namespace dae
 		void FixedUpdate();
 		void Render() const;
 
-		bool m_Destroy{ false };
+		bool m_destroy{ false };
 		template <typename T>
 		std::shared_ptr<T> GetComponent() const
 		{
-			for (const auto& component : m_components)
-			{
-				if (auto castedComponent = std::dynamic_pointer_cast<T>(component))
+			auto it = std::find_if(
+				m_components.begin(),
+				m_components.end(),
+				[](const std::shared_ptr<Component>& component)
 				{
-					return castedComponent;
-				}
+					return std::dynamic_pointer_cast<T>(component) != nullptr;
+				});
+
+			if (it != m_components.end())
+			{
+				return std::dynamic_pointer_cast<T>(*it);
 			}
+
 			return nullptr;
 		}
-
 		template <typename T, typename... Args>
 		std::shared_ptr<T> AddComponent(Args&&... args)
 		{
@@ -50,7 +55,7 @@ namespace dae
 				m_components.end());
 		}
 
-		GameObject() = default;
+		GameObject();
 		~GameObject();
 		GameObject(const GameObject& other) = delete;
 		GameObject(GameObject&& other) = delete;

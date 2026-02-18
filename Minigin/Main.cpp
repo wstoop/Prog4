@@ -25,26 +25,35 @@ static void load()
 	auto color = SDL_Color{ 255, 255, 0, 255 };
 
 	auto go = std::make_unique<dae::GameObject>();
-	go->AddComponent<dae::TransformComponent>()->SetPosition(0, 0);
+	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 0, 0, 0});
 	go->AddComponent<dae::TextureComponent>("background.png");
 	scene.Add(std::move(go));
 
 	go = std::make_unique<dae::GameObject>();
-	go->AddComponent<dae::TransformComponent>()->SetPosition(358, 180);
+	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 358, 180, 0 });
 	go->AddComponent<dae::RotateAndScaleComponent>();
 	go->AddComponent<dae::TextureComponent>("logo.png");
 	scene.Add(std::move(go));
 
 	go = std::make_unique<dae::GameObject>();
-	go->AddComponent<dae::TransformComponent>()->SetPosition(292, 20);
-
+	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 292, 20, 0 });
 	go->AddComponent<dae::TextComponent>("Programming 4 Assignment", font, color);
 	scene.Add(std::move(go));
 
 	go = std::make_unique<dae::GameObject>();
-	go->AddComponent<dae::TransformComponent>()->SetPosition(450, 300);
+	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 450, 300, 0 });
 	go->AddComponent<dae::FPSComponent>();
 	go->AddComponent<dae::TextComponent>("FPS", font, color);
+	scene.Add(std::move(go));
+
+	go = std::make_unique<dae::GameObject>();
+	auto go1 = std::make_unique<dae::GameObject>();
+	go1->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 100, 100, 0 });
+	go1->AddComponent<dae::TextureComponent>("Player.png");
+	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 200, 200, 0 });
+	go->GetComponent<dae::TransformComponent>()->SetParent(go1.get(), false);
+	go->AddComponent<dae::TextureComponent>("Player.png");
+	scene.Add(std::move(go1));
 	scene.Add(std::move(go));
 }
 

@@ -14,10 +14,10 @@ namespace dae
 		void Update() override;
 
 	private:
-		float m_RotationSpeed;
-		float m_ScaleSpeed;
-		float m_MinScale;
-		float m_MaxScale;
-		bool  m_ScalingUp;
+		float m_rotationSpeed;
+		float m_scaleSpeed;
+		float m_minScale;
+		float m_maxScale;
+		bool  m_scalingUp;
 	};
 }

@@ -11,13 +11,13 @@ void Scene::Add(std::unique_ptr<GameObject> object)
 
 void Scene::Remove(GameObject& object)
 {
-	object.m_Destroy = true;
+	object.m_destroy = true;
 }
 
 void Scene::RemoveAll()
 {
 	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
-		obj->m_Destroy = true;
+		obj->m_destroy = true;
 		});
 }
 
@@ -60,7 +60,7 @@ void Scene::PurgeDestroyedObjects()
 		std::remove_if(
 			m_objects.begin(),
 			m_objects.end(),
-			[](const auto& ptr) { return ptr->m_Destroy; }
+			[](const auto& ptr) { return ptr->m_destroy; }
 		),
 		m_objects.end()
 	);

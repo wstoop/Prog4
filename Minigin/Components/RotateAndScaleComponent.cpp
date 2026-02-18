@@ -2,10 +2,9 @@
 #include "TransformComponent.h"
 #include "TimeManager.h"
 #include "../GameObject.h"
-#include <algorithm>
 
 dae::RotateAndScaleComponent::RotateAndScaleComponent(float rotationSpeed, float scaleSpeed, float minScale, float maxScale)
-	: m_RotationSpeed(rotationSpeed), m_ScaleSpeed(scaleSpeed), m_MinScale(minScale), m_MaxScale(maxScale), m_ScalingUp(true)
+	: m_rotationSpeed(rotationSpeed), m_scaleSpeed(scaleSpeed), m_minScale(minScale), m_maxScale(maxScale), m_scalingUp(true)
 {
 }
 
@@ -17,7 +16,7 @@ void dae::RotateAndScaleComponent::Update()
 	{
 		{
 			auto rot = transform->GetRotation();
-			rot.z += m_RotationSpeed * dt;
+			rot.z += m_rotationSpeed * dt;
 			if (rot.z >= 360.0f) rot.z = std::fmod(rot.z, 360.0f);
 			else if (rot.z < 0.0f) rot.z = 360.0f + std::fmod(rot.z, 360.0f);
 			transform->SetRotation(rot);
@@ -26,22 +25,22 @@ void dae::RotateAndScaleComponent::Update()
 		{
 			auto scale = transform->GetScale();
 			float s = scale.x;
-			if (m_ScalingUp)
+			if (m_scalingUp)
 			{
-				s += m_ScaleSpeed * dt;
-				if (s >= m_MaxScale)
+				s += m_scaleSpeed * dt;
+				if (s >= m_maxScale)
 				{
-					s = m_MaxScale;
-					m_ScalingUp = false;
+					s = m_maxScale;
+					m_scalingUp = false;
 				}
 			}
 			else
 			{
-				s -= m_ScaleSpeed * dt;
-				if (s <= m_MinScale)
+				s -= m_scaleSpeed * dt;
+				if (s <= m_minScale)
 				{
-					s = m_MinScale;
-					m_ScalingUp = true;
+					s = m_minScale;
+					m_scalingUp = true;
 				}
 			}
 			transform->SetScale(s, s, scale.z);

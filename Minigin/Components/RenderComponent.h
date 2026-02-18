@@ -13,6 +13,6 @@ namespace dae
 
 		void Render() const;
 	protected:
-		std::shared_ptr<Texture2D> m_Texture;
+		std::shared_ptr<Texture2D> m_texture;
 	};
 }

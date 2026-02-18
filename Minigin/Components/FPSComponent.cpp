@@ -10,26 +10,26 @@ void dae::FPSComponent::Update()
 {
     const float dt = dae::TimeManager::GetInstance().GetDeltaTime();
 
-    m_AccumulatedTime += dt;
-    ++m_FrameCount;
+    m_accumulatedTime += dt;
+    ++m_frameCount;
 
-    if (m_AccumulatedTime >= 0.2f)
+    if (m_accumulatedTime >= 0.2f)
     {
-        float currentFPS = static_cast<float>(m_FrameCount) / m_AccumulatedTime;
+        float currentFPS = static_cast<float>(m_frameCount) / m_accumulatedTime;
 
-        if (!m_TextComponent)
+        if (!m_textComponent)
         {
-            m_TextComponent = GetOwner()->GetComponent<TextComponent>();
+            m_textComponent = GetOwner()->GetComponent<TextComponent>();
         }
 
-        if (m_TextComponent)
+        if (m_textComponent)
         {
             std::ostringstream ss;
             ss << std::fixed << std::setprecision(1) << currentFPS;
-            m_TextComponent->SetText(ss.str() + " FPS");
+            m_textComponent->SetText(ss.str() + " FPS");
         }
-        m_AccumulatedTime = 0.0f;
-        m_FrameCount = 0;
+        m_accumulatedTime = 0.0f;
+        m_frameCount = 0;
     }
 }
 

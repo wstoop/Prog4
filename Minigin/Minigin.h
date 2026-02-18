@@ -13,13 +13,13 @@ namespace dae
 	class Minigin final
 	{
 		bool m_quit{};
-		std::chrono::time_point<std::chrono::high_resolution_clock> m_LastTime{};
-		float m_Lag{};
-		float m_FixedTimeStep = 1.0f / 60.0f;
-		Renderer& m_Renderer;
-		SceneManager& m_SceneManager;
-		InputManager& m_Input;
-		TimeManager& m_TimeManager;
+		std::chrono::time_point<std::chrono::high_resolution_clock> m_lastTime{};
+		float m_lag{};
+		float m_fixedTimeStep = 1.0f / 60.0f;
+		Renderer& m_renderer;
+		SceneManager& m_sceneManager;
+		InputManager& m_input;
+		TimeManager& m_timeManager;
 	public:
 		explicit Minigin(const std::filesystem::path& dataPath);
 		~Minigin();

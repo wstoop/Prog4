@@ -6,7 +6,7 @@
 
 void dae::RenderComponent::Render() const
 {
-	if (m_Texture != nullptr)
+	if (m_texture != nullptr)
 	{
 		auto transformComp = GetOwner()->GetComponent<TransformComponent>();
 		float x = 0.0f;
@@ -16,7 +16,7 @@ void dae::RenderComponent::Render() const
 		float scaleY = 1.0f;
 		if (transformComp)
 		{
-			const auto& pos = transformComp->GetPos();
+			const auto& pos = transformComp->GetWorldPosition();
 			const auto& scale = transformComp->GetScale();
 			const auto& rotation = transformComp->GetRotation();
 
@@ -27,7 +27,7 @@ void dae::RenderComponent::Render() const
 			rot = rotation.z;
 		}
 
-		const auto size = m_Texture->GetSize();
+		const auto size = m_texture->GetSize();
 		const float originalWidth = size.x;
 		const float originalHeight = size.y;
 		const float width = originalWidth * scaleX;
@@ -39,6 +39,6 @@ void dae::RenderComponent::Render() const
 		const float centerX = width * 0.5f;
 		const float centerY = height * 0.5f;
 
-		Renderer::GetInstance().RenderTexture(*m_Texture, x, y, width, height, rot, centerX, centerY);
+		Renderer::GetInstance().RenderTexture(*m_texture, x, y, width, height, rot, centerX, centerY);
 	}
 }
