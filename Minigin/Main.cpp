@@ -13,6 +13,7 @@
 #include "Components/TextureComponent.h"
 #include "Components/FPSComponent.h"
 #include "Components/RotateAndScaleComponent.h"
+#include "Components/OrbitComponent.h"
 #include "Scene.h"
 
 #include <filesystem>
@@ -46,15 +47,25 @@ static void load()
 	go->AddComponent<dae::TextComponent>("FPS", font, color);
 	scene.Add(std::move(go));
 
-	go = std::make_unique<dae::GameObject>();
+	auto go0 = std::make_unique<dae::GameObject>();
 	auto go1 = std::make_unique<dae::GameObject>();
-	go1->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 100, 100, 0 });
+	auto go2 = std::make_unique<dae::GameObject>();
+	go0->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 100, 100, 0 });
+	go0->AddComponent<dae::TextureComponent>("Player.png");
+	go0->AddComponent<dae::RotateAndScaleComponent>(-90.0f, 0.5f, 0.5f, 1.5f);
+
+	go1->GetComponent<dae::TransformComponent>()->SetParent(go0.get(), false);
+	go1->AddComponent<dae::OrbitComponent>(50.f, 1.f, 0.f);
+	go1->AddComponent<dae::RotateAndScaleComponent>();
 	go1->AddComponent<dae::TextureComponent>("Player.png");
-	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 200, 200, 0 });
-	go->GetComponent<dae::TransformComponent>()->SetParent(go1.get(), false);
-	go->AddComponent<dae::TextureComponent>("Player.png");
+
+	go2->GetComponent<dae::TransformComponent>()->SetParent(go1.get(), false);
+	go2->AddComponent<dae::OrbitComponent>(70.f, -1.f, 0.f);
+	go2->AddComponent<dae::RotateAndScaleComponent>();
+	go2->AddComponent<dae::TextureComponent>("Player.png");
+	scene.Add(std::move(go0));
 	scene.Add(std::move(go1));
-	scene.Add(std::move(go));
+	scene.Add(std::move(go2));
 }
 
 int main(int, char*[]) {
