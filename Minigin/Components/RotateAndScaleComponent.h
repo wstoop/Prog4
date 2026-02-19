@@ -6,7 +6,7 @@ namespace dae
 	class RotateAndScaleComponent final : public Component
 	{
 	public:
-		RotateAndScaleComponent(float rotationSpeed = 90.0f, float scaleSpeed = 0.5f, float minScale = 0.5f, float maxScale = 1.5f);
+		RotateAndScaleComponent(GameObject* owner, float rotationSpeed = 90.0f, float scaleSpeed = 0.5f, float minScale = 0.5f, float maxScale = 1.5f);
 		virtual ~RotateAndScaleComponent() override = default;
 
 		void Update() override;

@@ -10,7 +10,7 @@ namespace dae
         float m_speed{};
         float m_angle{};
     public:
-        OrbitComponent(float radius, float speed, float startAngle = 0.f);
+        OrbitComponent(GameObject* owner, float radius, float speed, float startAngle = 0.f);
 
         void Update() override;
 

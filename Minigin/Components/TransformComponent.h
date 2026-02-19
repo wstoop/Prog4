@@ -21,7 +21,8 @@ namespace dae
 		glm::vec3 m_scale{ 1.0f, 1.0f, 1.0f };
 		glm::vec3 m_rotation{};
 	public:
-
+		TransformComponent(GameObject* owner);
+		
 		const glm::vec3& GetPos() const { return m_pos; }
 		const glm::vec3& GetScale() const { return m_scale; }
 		const glm::vec3& GetRotation() const { return m_rotation; }

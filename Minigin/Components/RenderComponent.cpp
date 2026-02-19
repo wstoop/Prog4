@@ -4,6 +4,11 @@
 #include "Renderer.h"
 #include "Texture2D.h"
 
+dae::RenderComponent::RenderComponent(GameObject* owner):
+	Component(owner)
+{
+}
+
 void dae::RenderComponent::Render() const
 {
 	if (m_texture != nullptr)

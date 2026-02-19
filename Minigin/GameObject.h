@@ -7,7 +7,7 @@ namespace dae
 	class Component;
 	class GameObject  final
 	{
-		std::vector<std::shared_ptr<Component>> m_components{};
+		std::vector<std::unique_ptr<Component>> m_components{};
 	public:
 		void Update();
 		void LateUpdate();
@@ -16,12 +16,12 @@ namespace dae
 
 		bool m_destroy{ false };
 		template <typename T>
-		std::shared_ptr<T> GetComponent() const
+		std::unique_ptr<T> GetComponent() const
 		{
 			auto it = std::find_if(
 				m_components.begin(),
 				m_components.end(),
-				[](const std::shared_ptr<Component>& component)
+				[](const std::unique_ptr<Component>& component)
 				{
 					return std::dynamic_pointer_cast<T>(component) != nullptr;
 				});
@@ -34,10 +34,10 @@ namespace dae
 			return nullptr;
 		}
 		template <typename T, typename... Args>
-		std::shared_ptr<T> AddComponent(Args&&... args)
+		std::unique_ptr<T> AddComponent(Args&&... args)
 		{
 			static_assert(std::is_base_of<Component, T>::value, "T must derive from Component");
-			auto component = std::make_shared<T>(std::forward<Args>(args)...);
+			auto component = std::make_unique<T>(std::forward<Args>(args)...);
 			component->SetOwner(this);
 			m_components.push_back(component);
 			return component;
@@ -48,7 +48,7 @@ namespace dae
 		{
 			m_components.erase(
 				std::remove_if(m_components.begin(), m_components.end(),
-					[](const std::shared_ptr<Component>& component)
+					[](const std::unique_ptr<Component>& component)
 					{
 						return std::dynamic_pointer_cast<T>(component) != nullptr;
 					}),

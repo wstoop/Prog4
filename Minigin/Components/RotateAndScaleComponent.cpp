@@ -3,8 +3,8 @@
 #include "TimeManager.h"
 #include "../GameObject.h"
 
-dae::RotateAndScaleComponent::RotateAndScaleComponent(float rotationSpeed, float scaleSpeed, float minScale, float maxScale)
-	: m_rotationSpeed(rotationSpeed), m_scaleSpeed(scaleSpeed), m_minScale(minScale), m_maxScale(maxScale), m_scalingUp(true)
+dae::RotateAndScaleComponent::RotateAndScaleComponent(GameObject* owner, float rotationSpeed, float scaleSpeed, float minScale, float maxScale)
+	: Component(owner), m_rotationSpeed(rotationSpeed), m_scaleSpeed(scaleSpeed), m_minScale(minScale), m_maxScale(maxScale), m_scalingUp(true)
 {
 }
 

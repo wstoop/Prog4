@@ -23,35 +23,31 @@ void Scene::RemoveAll()
 
 void Scene::Update()
 {
-	for(auto& object : m_objects)
-	{
-		object->Update();
-	}
+	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
+		obj->Update();
+		});
 }
 
 void Scene::LateUpdate()
 {
-	for (auto& object : m_objects)
-	{
-		object->LateUpdate();
-	}
+	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
+		obj->LateUpdate();
+		});
 	PurgeDestroyedObjects();
 }
 
 void Scene::FixedUpdate()
 {
-	for (auto& object : m_objects)
-	{
-		object->FixedUpdate();
-	}
+	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
+		obj->FixedUpdate();
+		});
 }
 
 void Scene::Render() const
 {
-	for (const auto& object : m_objects)
-	{
-		object->Render();
-	}
+	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
+		obj->Render();
+		});
 }
 
 void Scene::PurgeDestroyedObjects()

@@ -3,8 +3,9 @@
 #include "../GameObject.h"
 #include "../TimeManager.h"
 
-dae::OrbitComponent::OrbitComponent(float radius, float speed, float startAngle)
-    : m_radius(radius)
+dae::OrbitComponent::OrbitComponent(GameObject* owner, float radius, float speed, float startAngle)
+    : Component(owner)
+    , m_radius(radius)
     , m_speed(speed)
     , m_angle(startAngle)
 {

@@ -2,6 +2,11 @@
 #include "../GameObject.h"
 
 
+dae::TransformComponent::TransformComponent(GameObject* owner):
+    Component(owner)
+{
+}
+
 void dae::TransformComponent::SetScale(const float x, const float y, const float z)
 {
 	m_scale.x = x;

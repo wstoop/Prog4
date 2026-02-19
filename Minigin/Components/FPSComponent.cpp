@@ -6,6 +6,11 @@
 #include <sstream>
 #include <iomanip>
 
+dae::FPSComponent::FPSComponent(GameObject* owner):
+    Component(owner)
+{
+}
+
 void dae::FPSComponent::Update()
 {
     const float dt = dae::TimeManager::GetInstance().GetDeltaTime();

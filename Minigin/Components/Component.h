@@ -7,7 +7,7 @@ namespace dae
     class Component
     {
 		friend GameObject;
-        void SetOwner(GameObject* owner) { m_owner = owner; }
+        GameObject* m_owner{ nullptr };
     public:
         virtual ~Component() = default;
 
@@ -17,9 +17,10 @@ namespace dae
 
         
         GameObject* GetOwner() const { return m_owner; }
-
-    protected:
-        GameObject* m_owner{ nullptr };
-
+        Component(GameObject* owner) { m_owner = owner; }
+        Component(const Component& other) = delete;
+        Component(Component&& other) = delete;
+        Component& operator=(const Component& other) = delete;
+        Component& operator=(Component&& other) = delete;
     };
 }
