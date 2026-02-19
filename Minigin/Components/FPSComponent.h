@@ -8,7 +8,7 @@ namespace dae
 
 	class FPSComponent final : public Component
 	{
-		std::shared_ptr<TextComponent> m_textComponent;
+		TextComponent* m_textComponent;
 		float m_accumulatedTime{ 0.0f };
 		int	m_frameCount{ 0 };
 	public:

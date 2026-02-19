@@ -15,33 +15,32 @@ namespace dae
 		void Render() const;
 
 		bool m_destroy{ false };
-		template <typename T>
-		std::unique_ptr<T> GetComponent() const
+		template<typename T>
+		T* GetComponent() const
 		{
-			auto it = std::find_if(
-				m_components.begin(),
-				m_components.end(),
-				[](const std::unique_ptr<Component>& component)
-				{
-					return std::dynamic_pointer_cast<T>(component) != nullptr;
-				});
-
-			if (it != m_components.end())
+			for (const auto& component : m_components)
 			{
-				return std::dynamic_pointer_cast<T>(*it);
+				if (auto casted = dynamic_cast<T*>(component.get()))
+				{
+					return casted;
+				}
 			}
 
 			return nullptr;
 		}
-		template <typename T, typename... Args>
-		std::unique_ptr<T> AddComponent(Args&&... args)
+		template<typename T, typename... Args>
+		T* AddComponent(Args&&... args)
 		{
 			static_assert(std::is_base_of<Component, T>::value, "T must derive from Component");
-			auto component = std::make_unique<T>(std::forward<Args>(args)...);
-			component->SetOwner(this);
-			m_components.push_back(component);
-			return component;
+
+			auto component = std::make_unique<T>(this, std::forward<Args>(args)...);
+			T* rawPtr = component.get();
+
+			m_components.push_back(std::move(component));
+
+			return rawPtr;
 		}
+
 
 		template <typename T>
 		void RemoveComponent()
@@ -50,7 +49,7 @@ namespace dae
 				std::remove_if(m_components.begin(), m_components.end(),
 					[](const std::unique_ptr<Component>& component)
 					{
-						return std::dynamic_pointer_cast<T>(component) != nullptr;
+						return dynamic_cast<T>(*component) != nullptr;
 					}),
 				m_components.end());
 		}

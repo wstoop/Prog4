@@ -34,9 +34,9 @@ void dae::GameObject::FixedUpdate()
 void dae::GameObject::Render() const
 {
     std::for_each(m_components.begin(), m_components.end(),
-        [](const std::shared_ptr<Component>& component)
+        [](const std::unique_ptr<Component>& component)
         {
-            if (auto renderComp = std::dynamic_pointer_cast<RenderComponent>(component))
+            if (auto renderComp = dynamic_cast<RenderComponent*>(component.get()))
             {
                 renderComp->Render();
             }

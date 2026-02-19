@@ -18,6 +18,10 @@ namespace dae
 
 		TextComponent(GameObject* owner, const std::string& text, std::shared_ptr<Font> font, const SDL_Color& color);
 		~TextComponent() override = default;
+		TextComponent(const TextComponent& other) = delete;
+		TextComponent(TextComponent&& other) = delete;
+		TextComponent& operator=(const TextComponent& other) = delete;
+		TextComponent& operator=(TextComponent&& other) = delete;
 	private:
 		bool m_needsUpdate{};
 		std::string m_text{};

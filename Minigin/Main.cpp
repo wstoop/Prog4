@@ -27,42 +27,42 @@ static void load()
 
 	auto go = std::make_unique<dae::GameObject>();
 	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 0, 0, 0});
-	go->AddComponent<dae::TextureComponent>(go, "background.png");
+	go->AddComponent<dae::TextureComponent>("background.png");
 	scene.Add(std::move(go));
 
 	go = std::make_unique<dae::GameObject>();
 	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 358, 180, 0 });
-	go->AddComponent<dae::RotateAndScaleComponent>(go);
-	go->AddComponent<dae::TextureComponent>(go, "logo.png");
+	go->AddComponent<dae::RotateAndScaleComponent>();
+	go->AddComponent<dae::TextureComponent>("logo.png");
 	scene.Add(std::move(go));
 
 	go = std::make_unique<dae::GameObject>();
 	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 292, 20, 0 });
-	go->AddComponent<dae::TextComponent>(go, "Programming 4 Assignment", font, color);
+	go->AddComponent<dae::TextComponent>("Programming 4 Assignment", font, color);
 	scene.Add(std::move(go));
 
 	go = std::make_unique<dae::GameObject>();
 	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 450, 300, 0 });
-	go->AddComponent<dae::FPSComponent>(go);
-	go->AddComponent<dae::TextComponent>(go, "FPS", font, color);
+	go->AddComponent<dae::TextComponent>("FPS", font, color);
+	go->AddComponent<dae::FPSComponent>();
 	scene.Add(std::move(go));
 
 	auto go0 = std::make_unique<dae::GameObject>();
 	auto go1 = std::make_unique<dae::GameObject>();
 	auto go2 = std::make_unique<dae::GameObject>();
 	go0->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 100, 100, 0 });
-	go0->AddComponent<dae::TextureComponent>(go0, "Player.png");
-	go0->AddComponent<dae::RotateAndScaleComponent>(go0, -90.0f, 0.5f, 0.5f, 1.5f);
+	go0->AddComponent<dae::TextureComponent>("Player.png");
+	go0->AddComponent<dae::RotateAndScaleComponent>(-90.0f, 0.5f, 0.5f, 1.5f);
 
 	go1->GetComponent<dae::TransformComponent>()->SetParent(go0.get(), false);
-	go1->AddComponent<dae::OrbitComponent>(go1, 50.f, 1.f, 0.f);
-	go1->AddComponent<dae::RotateAndScaleComponent>(go1);
-	go1->AddComponent<dae::TextureComponent>(go1, "Player.png");
+	go1->AddComponent<dae::OrbitComponent>(50.f, 1.f, 0.f);
+	go1->AddComponent<dae::RotateAndScaleComponent>();
+	go1->AddComponent<dae::TextureComponent>("Player.png");
 
 	go2->GetComponent<dae::TransformComponent>()->SetParent(go1.get(), false);
-	go2->AddComponent<dae::OrbitComponent>(go2, 70.f, -1.f, 0.f);
-	go2->AddComponent<dae::RotateAndScaleComponent>(go2);
-	go2->AddComponent<dae::TextureComponent>(go2, "Player.png");
+	go2->AddComponent<dae::OrbitComponent>(70.f, -1.f, 0.f);
+	go2->AddComponent<dae::RotateAndScaleComponent>();
+	go2->AddComponent<dae::TextureComponent>("Player.png");
 	scene.Add(std::move(go0));
 	scene.Add(std::move(go1));
 	scene.Add(std::move(go2));

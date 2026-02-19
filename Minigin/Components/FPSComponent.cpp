@@ -9,6 +9,7 @@
 dae::FPSComponent::FPSComponent(GameObject* owner):
     Component(owner)
 {
+    m_textComponent = GetOwner()->GetComponent<TextComponent>();
 }
 
 void dae::FPSComponent::Update()
