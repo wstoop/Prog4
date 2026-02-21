@@ -176,10 +176,13 @@ void CreateHUD(dae::Scene& scene)
 
 static void load()
 {
-	auto& scene = dae::SceneManager::GetInstance().CreateScene();
-
+	auto& scene = dae::SceneManager::GetInstance().CreateScene("Game");
+	auto& test = dae::SceneManager::GetInstance().CreateScene("Test");
+	test;
 	CreateBackground(scene, "Background_Galaga.png");
 	CreateHUD(scene);
+	
+	dae::SceneManager::GetInstance().SetActiveScene("Game");
 }
 
 int main(int, char*[]) {

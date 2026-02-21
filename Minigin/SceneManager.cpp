@@ -3,38 +3,47 @@
 
 void dae::SceneManager::Update()
 {
-	for(auto& scene : m_scenes)
-	{
-		scene->Update();
-	}
+	if (m_activeScene)
+		m_activeScene->Update();
 }
 
 void dae::SceneManager::FixedUpdate()
 {
-	for (auto& scene : m_scenes)
-	{
-		scene->FixedUpdate();
-	}
+	if (m_activeScene)
+		m_activeScene->FixedUpdate();
 }
 
 void dae::SceneManager::LateUpdate()
 {
-	for (auto& scene : m_scenes)
-	{
-		scene->LateUpdate();
-	}
+	if (m_activeScene)
+		m_activeScene->LateUpdate();
 }
 
 void dae::SceneManager::Render()
 {
-	for (const auto& scene : m_scenes)
+	if (m_activeScene)
+		m_activeScene->Render();
+}
+
+dae::Scene& dae::SceneManager::CreateScene(const std::string& name)
+{
+	m_scenes.emplace_back(new Scene(name));
+	return *m_scenes.back();
+}
+
+void dae::SceneManager::SetActiveScene(const std::string& name)
+{
+	for (auto& scene : m_scenes)
 	{
-		scene->Render();
+		if (scene->GetName() == name)
+		{
+			m_activeScene = scene.get();
+			return;
+		}
 	}
 }
 
-dae::Scene& dae::SceneManager::CreateScene()
+dae::Scene* dae::SceneManager::GetActiveScene() const
 {
-	m_scenes.emplace_back(new Scene());
-	return *m_scenes.back();
+	return m_activeScene;
 }
