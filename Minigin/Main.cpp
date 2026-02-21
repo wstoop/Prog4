@@ -18,54 +18,168 @@
 
 #include <filesystem>
 namespace fs = std::filesystem;
+std::unique_ptr<dae::GameObject> CreateStaticText(
+	std::shared_ptr<dae::Font> font,
+	SDL_Color color,
+	glm::vec3 position,
+	const std::string& text)
+{
+	auto go = std::make_unique<dae::GameObject>();
+
+	go->GetComponent<dae::TransformComponent>()
+		->SetLocalPosition(position);
+
+	go->AddComponent<dae::TextComponent>(text, font, color);
+
+	return go;
+}
+
+void CreateScoreBlock(
+	dae::Scene& scene,
+	const std::string& label,
+	const std::string& score,
+	glm::vec3 labelPos,
+	glm::vec3 scorePos,
+	std::shared_ptr<dae::Font> font,
+	SDL_Color labelColor,
+	SDL_Color scoreColor)
+{
+	scene.Add(CreateStaticText(font, labelColor, labelPos, label));
+	scene.Add(CreateStaticText(font, scoreColor, scorePos, score));
+}
+
+void CreateBackground(dae::Scene& scene, const std::string& fileName)
+{
+	auto go = std::make_unique<dae::GameObject>();
+
+	go->GetComponent<dae::TransformComponent>()
+		->SetLocalPosition({ 0, 0, 0 });
+
+	go->AddComponent<dae::TextureComponent>(fileName);
+
+	scene.Add(std::move(go));
+}
+
+void CreateLivesRow(
+	dae::Scene& scene,
+	int lives,
+	glm::vec3 startPos,
+	float spacing,
+	const std::string& spriteFile)
+{
+	for (int i = 0; i < lives; ++i)
+	{
+		auto go = std::make_unique<dae::GameObject>();
+
+		go->GetComponent<dae::TransformComponent>()
+			->SetLocalPosition({ startPos.x + i * spacing, startPos.y, startPos.z });
+
+		go->AddComponent<dae::TextureComponent>(spriteFile);
+
+		scene.Add(std::move(go));
+	}
+}
+
+void CreateLevelRow(
+	dae::Scene& scene,
+	int levelCount,
+	glm::vec3 startPos,
+	float spacing,
+	const std::string& spriteFile)
+{
+	for (int i = 0; i < levelCount; ++i)
+	{
+		auto go = std::make_unique<dae::GameObject>();
+
+		go->GetComponent<dae::TransformComponent>()
+			->SetLocalPosition({ startPos.x + i * spacing, startPos.y, startPos.z });
+
+		go->AddComponent<dae::TextureComponent>(spriteFile);
+
+		scene.Add(std::move(go));
+	}
+}
+
+void CreateHUD(dae::Scene& scene)
+{
+	auto font = dae::ResourceManager::GetInstance().LoadFont("ArcadeFont.otf", 36);
+
+	SDL_Color redText{ 188, 25, 0, 255 };
+	SDL_Color whiteText{ 255, 255, 255, 255 };
+
+	auto CreateText = [&](const std::string& text,
+		SDL_Color color,
+		glm::vec3 position)
+		{
+			auto go = std::make_unique<dae::GameObject>();
+
+			go->GetComponent<dae::TransformComponent>()
+				->SetLocalPosition(position);
+
+			go->AddComponent<dae::TextComponent>(text, font, color);
+
+			scene.Add(std::move(go));
+		};
+
+	//Highscore
+	CreateText("HIGH", redText, { 650, 75, 0 });
+	CreateText("SCORE", redText, { 670, 95, 0 });
+	CreateText("30000", whiteText, { 670, 115, 0 });
+
+	//p1 score
+	CreateText("1UP", redText, { 650, 180, 0 });
+	CreateText("00", whiteText, { 720, 220, 0 });
+
+	//p2 score
+	CreateText("2UP", redText, { 650, 280, 0 });
+	CreateText("00", whiteText, { 720, 320, 0 });
+
+	const std::string spriteFile = "Player.png";
+
+	const int p1Lives = 3;
+	const int p2Lives = 3;
+	const int level = 1;
+
+	const float startX = 630.f;
+	const float spacing = 50.f;
+
+	const float baseY = 380.f;
+	const float verticalSpacing = 60.f;
+
+	auto CreateSpriteRow = [&](int count, float yPos)
+		{
+			for (int i = 0; i < count; ++i)
+			{
+				auto go = std::make_unique<dae::GameObject>();
+
+				go->GetComponent<dae::TransformComponent>()
+					->SetLocalPosition({ startX + i * spacing, yPos, 0 });
+
+				go->GetComponent<dae::TransformComponent>()
+					->SetScale({ 3, 3, 0 });
+
+				go->AddComponent<dae::TextureComponent>(spriteFile);
+
+				scene.Add(std::move(go));
+			}
+		};
+
+	//p1 lives
+	CreateSpriteRow(p1Lives, baseY);
+
+	//p2 lives
+	CreateSpriteRow(p2Lives, baseY + verticalSpacing);
+
+	//current level
+	CreateSpriteRow(level, baseY + verticalSpacing * 4);
+}
 
 static void load()
 {
 	auto& scene = dae::SceneManager::GetInstance().CreateScene();
-	auto font = dae::ResourceManager::GetInstance().LoadFont("Lingua.otf", 36);
-	auto color = SDL_Color{ 255, 255, 0, 255 };
 
-	auto go = std::make_unique<dae::GameObject>();
-	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 0, 0, 0});
-	go->AddComponent<dae::TextureComponent>("background.png");
-	scene.Add(std::move(go));
-
-	go = std::make_unique<dae::GameObject>();
-	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 358, 180, 0 });
-	go->AddComponent<dae::RotateAndScaleComponent>();
-	go->AddComponent<dae::TextureComponent>("logo.png");
-	scene.Add(std::move(go));
-
-	go = std::make_unique<dae::GameObject>();
-	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 292, 20, 0 });
-	go->AddComponent<dae::TextComponent>("Programming 4 Assignment", font, color);
-	scene.Add(std::move(go));
-
-	go = std::make_unique<dae::GameObject>();
-	go->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 450, 300, 0 });
-	go->AddComponent<dae::TextComponent>("FPS", font, color);
-	go->AddComponent<dae::FPSComponent>();
-	scene.Add(std::move(go));
-
-	auto go0 = std::make_unique<dae::GameObject>();
-	auto go1 = std::make_unique<dae::GameObject>();
-	auto go2 = std::make_unique<dae::GameObject>();
-	go0->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ 100, 100, 0 });
-	go0->AddComponent<dae::TextureComponent>("Player.png");
-	go0->AddComponent<dae::RotateAndScaleComponent>(-90.0f, 0.5f, 0.5f, 1.5f);
-
-	go1->GetComponent<dae::TransformComponent>()->SetParent(go0.get(), false);
-	go1->AddComponent<dae::OrbitComponent>(50.f, 1.f, 0.f);
-	go1->AddComponent<dae::RotateAndScaleComponent>();
-	go1->AddComponent<dae::TextureComponent>("Player.png");
-
-	go2->GetComponent<dae::TransformComponent>()->SetParent(go1.get(), false);
-	go2->AddComponent<dae::OrbitComponent>(70.f, -1.f, 0.f);
-	go2->AddComponent<dae::RotateAndScaleComponent>();
-	go2->AddComponent<dae::TextureComponent>("Player.png");
-	scene.Add(std::move(go0));
-	scene.Add(std::move(go1));
-	scene.Add(std::move(go2));
+	CreateBackground(scene, "Background_Galaga.png");
+	CreateHUD(scene);
 }
 
 int main(int, char*[]) {
@@ -80,3 +194,5 @@ int main(int, char*[]) {
 	engine.Run(load);
     return 0;
 }
+
+

@@ -27,7 +27,7 @@ add_executable(${TARGET_NAME} ${TARGET_PARAM}
   
   Minigin/Texture2D.cpp
   
- "Minigin/TimeManager.h"  "Minigin/Components/Component.h"  "Minigin/Components/TextComponent.h" "Minigin/Components/TextComponent.cpp"  "Minigin/Components/TransformComponent.h"  "Minigin/Components/RenderComponent.h" "Minigin/Components/TextureComponent.h" "Minigin/Components/TextureComponent.cpp" "Minigin/Components/FPSComponent.h" "Minigin/Components/FPSComponent.cpp" "Minigin/Components/TransformComponent.cpp" "Minigin/Components/RenderComponent.cpp" "Minigin/Components/RotateAndScaleComponent.h" "Minigin/Components/RotateAndScaleComponent.cpp" "Minigin/Components/OrbitComponent.h" "Minigin/Components/OrbitComponent.cpp")
+ "Minigin/TimeManager.h"  "Minigin/Components/Component.h"  "Minigin/Components/TextComponent.h" "Minigin/Components/TextComponent.cpp"  "Minigin/Components/TransformComponent.h"  "Minigin/Components/RenderComponent.h" "Minigin/Components/TextureComponent.h" "Minigin/Components/TextureComponent.cpp" "Minigin/Components/FPSComponent.h" "Minigin/Components/FPSComponent.cpp" "Minigin/Components/TransformComponent.cpp" "Minigin/Components/RenderComponent.cpp" "Minigin/Components/RotateAndScaleComponent.h" "Minigin/Components/RotateAndScaleComponent.cpp" "Minigin/Components/OrbitComponent.h" "Minigin/Components/OrbitComponent.cpp"  )
 
 # enable c++20 features
 target_compile_features(${TARGET_NAME} PUBLIC cxx_std_20)
