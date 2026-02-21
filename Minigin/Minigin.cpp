@@ -71,7 +71,7 @@ dae::Minigin::Minigin(const std::filesystem::path& dataPath)
 	}
 
 	g_window = SDL_CreateWindow(
-		"Galaga",
+		"Galaga - Warre Stoop",
 		800,
 		830,
 		SDL_WINDOW_OPENGL

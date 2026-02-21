@@ -11,10 +11,10 @@
 #include "Components/TransformComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TextureComponent.h"
-#include "Components/FPSComponent.h"
-#include "Components/RotateAndScaleComponent.h"
-#include "Components/OrbitComponent.h"
+#include "Components/FormationComponent.h"
+#include "EnemyFactory.h"
 #include "Scene.h"
+#include <fstream>
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -60,46 +60,6 @@ void CreateBackground(dae::Scene& scene, const std::string& fileName)
 	scene.Add(std::move(go));
 }
 
-void CreateLivesRow(
-	dae::Scene& scene,
-	int lives,
-	glm::vec3 startPos,
-	float spacing,
-	const std::string& spriteFile)
-{
-	for (int i = 0; i < lives; ++i)
-	{
-		auto go = std::make_unique<dae::GameObject>();
-
-		go->GetComponent<dae::TransformComponent>()
-			->SetLocalPosition({ startPos.x + i * spacing, startPos.y, startPos.z });
-
-		go->AddComponent<dae::TextureComponent>(spriteFile);
-
-		scene.Add(std::move(go));
-	}
-}
-
-void CreateLevelRow(
-	dae::Scene& scene,
-	int levelCount,
-	glm::vec3 startPos,
-	float spacing,
-	const std::string& spriteFile)
-{
-	for (int i = 0; i < levelCount; ++i)
-	{
-		auto go = std::make_unique<dae::GameObject>();
-
-		go->GetComponent<dae::TransformComponent>()
-			->SetLocalPosition({ startPos.x + i * spacing, startPos.y, startPos.z });
-
-		go->AddComponent<dae::TextureComponent>(spriteFile);
-
-		scene.Add(std::move(go));
-	}
-}
-
 void CreateHUD(dae::Scene& scene)
 {
 	auto font = dae::ResourceManager::GetInstance().LoadFont("ArcadeFont.otf", 36);
@@ -134,8 +94,6 @@ void CreateHUD(dae::Scene& scene)
 	CreateText("2UP", redText, { 650, 280, 0 });
 	CreateText("00", whiteText, { 720, 320, 0 });
 
-	const std::string spriteFile = "Player.png";
-
 	const int p1Lives = 3;
 	const int p2Lives = 3;
 	const int level = 1;
@@ -146,7 +104,7 @@ void CreateHUD(dae::Scene& scene)
 	const float baseY = 380.f;
 	const float verticalSpacing = 60.f;
 
-	auto CreateSpriteRow = [&](int count, float yPos)
+	auto CreateSpriteRow = [&](const std::string& spriteFile, int count, float yPos)
 		{
 			for (int i = 0; i < count; ++i)
 			{
@@ -165,23 +123,104 @@ void CreateHUD(dae::Scene& scene)
 		};
 
 	//p1 lives
-	CreateSpriteRow(p1Lives, baseY);
+	CreateSpriteRow("Player.png", p1Lives, baseY);
 
 	//p2 lives
-	CreateSpriteRow(p2Lives, baseY + verticalSpacing);
+	CreateSpriteRow("Player.png", p2Lives, baseY + verticalSpacing);
 
 	//current level
-	CreateSpriteRow(level, baseY + verticalSpacing * 4);
+	CreateSpriteRow("levelCounter.png", level, baseY + verticalSpacing * 4);
+}
+
+std::vector<std::string> LoadFormation(const std::string& path)
+{
+	std::vector<std::string> lines;
+	std::ifstream file(path);
+
+	if (!file.is_open())
+	{
+		throw std::runtime_error(std::string("No formation file found"));
+	}
+	std::string line;
+	while (std::getline(file, line))
+	{
+		lines.push_back(line);
+	}
+
+	return lines;
+}
+
+void CreateEnemies(dae::Scene& scene)
+{
+	dae::EnemyFactory::Register('B', []()
+		{
+			auto enemy = std::make_unique<dae::GameObject>();
+			enemy->AddComponent<dae::TextureComponent>("bee.png");
+			return enemy;
+		});
+
+	dae::EnemyFactory::Register('W', []()
+		{
+			auto enemy = std::make_unique<dae::GameObject>();
+			enemy->AddComponent<dae::TextureComponent>("butterfly.png");
+			return enemy;
+		});
+
+	dae::EnemyFactory::Register('G', []()
+		{
+			auto enemy = std::make_unique<dae::GameObject>();
+			enemy->AddComponent<dae::TextureComponent>("bird.png");
+			return enemy;
+		});
+
+	float spacingX{ 45.f };
+	float spacingY{ 40.f };
+
+	auto formationData = LoadFormation("./Data/formation1.txt");
+
+	auto formationMover = std::make_unique<dae::GameObject>();
+	formationMover->AddComponent<dae::FormationComponent>();
+	formationMover->GetComponent<dae::TransformComponent>()
+		->SetLocalPosition({ 160.f, 200.f, 0.f });
+
+	auto* formationPtr = formationMover.get();
+
+	for (size_t row = 0; row < formationData.size(); ++row)
+	{
+		for (size_t col = 0; col < formationData[row].size(); ++col)
+		{
+			char cell = formationData[row][col];
+
+			if (cell == '.')
+				continue;
+
+			auto enemy = dae::EnemyFactory::Create(cell);
+			if (!enemy)
+				continue;
+
+			enemy->GetComponent<dae::TransformComponent>()
+				->SetLocalPosition({ col * spacingX, row * spacingY, 0.f });
+
+			enemy->GetComponent<dae::TransformComponent>()
+				->SetScale({ 3.f, 3.f, 0.f });
+
+			enemy->GetComponent<dae::TransformComponent>()
+				->SetParent(formationPtr, false);
+
+			scene.Add(std::move(enemy));
+		}
+	}
+
+	scene.Add(std::move(formationMover));
 }
 
 static void load()
 {
 	auto& scene = dae::SceneManager::GetInstance().CreateScene("Game");
-	auto& test = dae::SceneManager::GetInstance().CreateScene("Test");
-	test;
 	CreateBackground(scene, "Background_Galaga.png");
 	CreateHUD(scene);
-	
+	CreateEnemies(scene);
+
 	dae::SceneManager::GetInstance().SetActiveScene("Game");
 }
 

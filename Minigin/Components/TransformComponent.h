@@ -16,14 +16,13 @@ namespace dae
 		GameObject* m_parent = nullptr;
 		bool m_positionIsDirty = true;
 		std::vector<GameObject*> m_children{};
-
-		glm::vec3 m_pos{};
 		glm::vec3 m_scale{ 1.0f, 1.0f, 1.0f };
 		glm::vec3 m_rotation{};
 	public:
 		TransformComponent(GameObject* owner);
 		
-		const glm::vec3& GetPos() const { return m_pos; }
+		const glm::vec3& GetWorldPosition();
+		const glm::vec3& GetLocalPosition() const { return m_localPosition; }
 		const glm::vec3& GetScale() const { return m_scale; }
 		const glm::vec3& GetRotation() const { return m_rotation; }
 
@@ -36,7 +35,9 @@ namespace dae
 
 		void SetParent(GameObject* parent, bool keepWorldPosition);
 		void SetLocalPosition(const glm::vec3& pos);
-		const glm::vec3& GetWorldPosition();
+		const std::vector<GameObject*>& GetChildren() const { return m_children; }
+		GameObject* GetChild(size_t index) const { return m_children.at(index); }
+		
 		void UpdateWorldPosition();
 		GameObject* GetParent();
 
