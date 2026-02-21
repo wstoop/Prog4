@@ -221,6 +221,8 @@ static void load()
 	CreateHUD(scene);
 	CreateEnemies(scene);
 
+
+
 	dae::SceneManager::GetInstance().SetActiveScene("Game");
 }
 

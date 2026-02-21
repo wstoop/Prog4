@@ -10,7 +10,6 @@ namespace dae
         float m_time{ 0.f };
         float m_horizontalOffset{ 30.f };
         bool m_moveLeft{ true };
-        glm::vec3 m_centerPosition{};
         TransformComponent* m_transform{ nullptr };
 
 		void LeftRight();
