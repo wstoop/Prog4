@@ -18,9 +18,13 @@ dae::EnemyEntryComponent::EnemyEntryComponent(GameObject* owner, GameObject* for
 void dae::EnemyEntryComponent::Update()
 {
     if (m_done)
+    {
         return;
+    }
 	if (!m_start)
+    {
         return;
+    }
 
     float dt = dae::TimeManager::GetInstance().GetDeltaTime();
     if (m_startDelay > 0.f)

@@ -25,7 +25,6 @@ namespace dae
 		};
 		std::vector<Segment> m_segments;
 
-		glm::vec3 m_previousPos{};
 		glm::vec3 m_endPoint{};
 		TransformComponent* m_transform{ nullptr };
 		GameObject* m_formationParent{ nullptr };
