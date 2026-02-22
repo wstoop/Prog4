@@ -24,13 +24,13 @@ namespace dae
 			float timeEnd{};
 		};
 		std::vector<Segment> m_segments;
-
+		float m_duration{ 1.f };
 		float m_startDelay{ 0.f };
 		glm::vec3 m_endPoint{};
 		TransformComponent* m_transform{ nullptr };
 		GameObject* m_formationParent{ nullptr };
 
-		float m_duration{ 1.f };
+
 		float m_elapsed{ 0.f };
 
 		bool m_done{ false };
