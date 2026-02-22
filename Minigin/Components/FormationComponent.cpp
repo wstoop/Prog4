@@ -7,6 +7,7 @@ dae::FormationComponent::FormationComponent(GameObject* owner)
     : Component(owner)
 {
 	m_transform = GetOwner()->GetComponent<TransformComponent>();
+	m_allEnemies = 999;
 }
 
 void dae::FormationComponent::Update()
@@ -16,8 +17,11 @@ void dae::FormationComponent::Update()
 
 void dae::FormationComponent::LeftRight()
 {
+	if(m_dockedEnemies < m_allEnemies)
+		return;
+
 	m_time += TimeManager::GetInstance().GetDeltaTime();
-	if (m_time >= 0.4f)
+	if (m_time >= 0.45f)
 	{
 		m_time = 0.f;
 		if (m_moveLeft) m_horizontalOffset *= -1.f;

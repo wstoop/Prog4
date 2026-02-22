@@ -8,6 +8,7 @@ namespace dae
     {
 		friend GameObject;
         GameObject* m_owner{ nullptr };
+
     public:
         virtual ~Component() = default;
 

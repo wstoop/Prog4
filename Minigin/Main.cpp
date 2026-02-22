@@ -12,52 +12,33 @@
 #include "Components/TextComponent.h"
 #include "Components/TextureComponent.h"
 #include "Components/FormationComponent.h"
+#include "Components/EnemyEntryComponent.h"
+#include "Components/EntryQueueComponent.h"
+#include "Components/OrbitComponent.h"
+#include "Components/ScrollBackgroundComponent.h"
 #include "EnemyFactory.h"
 #include "Scene.h"
 #include <fstream>
 
 #include <filesystem>
 namespace fs = std::filesystem;
-std::unique_ptr<dae::GameObject> CreateStaticText(
-	std::shared_ptr<dae::Font> font,
-	SDL_Color color,
-	glm::vec3 position,
-	const std::string& text)
-{
-	auto go = std::make_unique<dae::GameObject>();
-
-	go->GetComponent<dae::TransformComponent>()
-		->SetLocalPosition(position);
-
-	go->AddComponent<dae::TextComponent>(text, font, color);
-
-	return go;
-}
-
-void CreateScoreBlock(
-	dae::Scene& scene,
-	const std::string& label,
-	const std::string& score,
-	glm::vec3 labelPos,
-	glm::vec3 scorePos,
-	std::shared_ptr<dae::Font> font,
-	SDL_Color labelColor,
-	SDL_Color scoreColor)
-{
-	scene.Add(CreateStaticText(font, labelColor, labelPos, label));
-	scene.Add(CreateStaticText(font, scoreColor, scorePos, score));
-}
 
 void CreateBackground(dae::Scene& scene, const std::string& fileName)
 {
-	auto go = std::make_unique<dae::GameObject>();
+	auto background = std::make_unique<dae::GameObject>();
+	
 
-	go->GetComponent<dae::TransformComponent>()
-		->SetLocalPosition({ 0, 0, 0 });
+	auto bgA = std::make_unique<dae::GameObject>();
+	bgA->AddComponent<dae::TextureComponent>(fileName);
+	bgA->GetComponent<dae::TransformComponent>()->SetParent(background.get(), false);
+	auto bgB = std::make_unique<dae::GameObject>();
+	bgB->AddComponent<dae::TextureComponent>(fileName);
+	bgB->GetComponent<dae::TransformComponent>()->SetParent(background.get(), false);
 
-	go->AddComponent<dae::TextureComponent>(fileName);
-
-	scene.Add(std::move(go));
+	background->AddComponent<dae::ScrollBackgroundComponent>(600.f, 830.f);
+	scene.Add(std::move(background));
+	scene.Add(std::move(bgA));
+	scene.Add(std::move(bgB));
 }
 
 void CreateHUD(dae::Scene& scene)
@@ -156,6 +137,7 @@ void CreateEnemies(dae::Scene& scene)
 		{
 			auto enemy = std::make_unique<dae::GameObject>();
 			enemy->AddComponent<dae::TextureComponent>("bee.png");
+			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
 			return enemy;
 		});
 
@@ -163,6 +145,7 @@ void CreateEnemies(dae::Scene& scene)
 		{
 			auto enemy = std::make_unique<dae::GameObject>();
 			enemy->AddComponent<dae::TextureComponent>("butterfly.png");
+			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
 			return enemy;
 		});
 
@@ -170,6 +153,7 @@ void CreateEnemies(dae::Scene& scene)
 		{
 			auto enemy = std::make_unique<dae::GameObject>();
 			enemy->AddComponent<dae::TextureComponent>("bird.png");
+			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
 			return enemy;
 		});
 
@@ -179,12 +163,12 @@ void CreateEnemies(dae::Scene& scene)
 	auto formationData = LoadFormation("./Data/formation1.txt");
 
 	auto formationMover = std::make_unique<dae::GameObject>();
-	formationMover->AddComponent<dae::FormationComponent>();
 	formationMover->GetComponent<dae::TransformComponent>()
-		->SetLocalPosition({ 160.f, 200.f, 0.f });
-
+		->SetLocalPosition({ 120.f, 200.f, 0.f });
+	formationMover->AddComponent<dae::FormationComponent>();
 	auto* formationPtr = formationMover.get();
-
+	int enemyCount = 0;
+	std::vector<std::vector<dae::EnemyEntryComponent*>> enemiesByCol(formationData[0].size());
 	for (size_t row = 0; row < formationData.size(); ++row)
 	{
 		for (size_t col = 0; col < formationData[row].size(); ++col)
@@ -198,20 +182,86 @@ void CreateEnemies(dae::Scene& scene)
 			if (!enemy)
 				continue;
 
-			enemy->GetComponent<dae::TransformComponent>()
-				->SetLocalPosition({ col * spacingX, row * spacingY, 0.f });
+			auto* transform = enemy->GetComponent<dae::TransformComponent>();
 
-			enemy->GetComponent<dae::TransformComponent>()
-				->SetScale({ 3.f, 3.f, 0.f });
+			glm::vec3 localTarget{ col * spacingX, row * spacingY, 0.f };
+			glm::vec3 target{
+				formationPtr->GetComponent<dae::TransformComponent>()->GetLocalPosition().x + localTarget.x,
+				formationPtr->GetComponent<dae::TransformComponent>()->GetLocalPosition().y + localTarget.y,
+				0.f
+			};
+			transform->SetScale({ 3.f, 3.f, 0.f });
 
-			enemy->GetComponent<dae::TransformComponent>()
-				->SetParent(formationPtr, false);
+			float delay = (row * 0.05f) + (col * 0.05f);
+			enemy->AddComponent<dae::EnemyEntryComponent>(
+				formationPtr,
+				transform,
+				target,
+				2.0f,
+				delay
+			);
 
+			auto* entryComp = enemy->GetComponent<dae::EnemyEntryComponent>();
+			enemiesByCol[col].push_back(entryComp);
+			++enemyCount;
 			scene.Add(std::move(enemy));
 		}
 	}
 
+	std::vector<dae::EntryBatch> entryBatches;
+	std::vector<std::pair<int, int>> colPairs;
+	int totalCols = static_cast<int>(formationData[0].size());
+	for (int i = 0; i < totalCols / 2; ++i)
+		colPairs.push_back({ i, totalCols - 1 - i });
+
+	bool enterFromLeft = true;
+	for (auto& [leftCol, rightCol] : colPairs)
+	{
+		dae::EntryBatch batch;
+		for (auto* entry : enemiesByCol[leftCol])
+		{
+			entry->SetEntryDirection(enterFromLeft);
+			batch.enemies.push_back(entry);
+		}
+		for (auto* entry : enemiesByCol[rightCol])
+		{
+			entry->SetEntryDirection(!enterFromLeft);
+			batch.enemies.push_back(entry);
+		}
+		entryBatches.push_back(batch);
+		enterFromLeft = !enterFromLeft;
+	}
+	formationMover->AddComponent<dae::EntryQueueComponent>(std::move(entryBatches));
+	formationMover->GetComponent<dae::FormationComponent>()->SetAllEnemies(enemyCount);
 	scene.Add(std::move(formationMover));
+}
+
+void CreatePlayer(dae::Scene& scene)
+{
+	auto empty = std::make_unique<dae::GameObject>();
+	empty->GetComponent<dae::TransformComponent>()
+		->SetLocalPosition({ 300.f, 700.f, 0.f });
+
+	auto player = std::make_unique<dae::GameObject>();
+	player->AddComponent<dae::TextureComponent>("Player.png");
+	player->GetComponent<dae::TransformComponent>()
+		->SetLocalPosition({ 300.f, 700.f, 0.f });
+	player->GetComponent<dae::TransformComponent>()
+		->SetScale({ 3.f, 3.f, 0.f });
+	player->AddComponent<dae::OrbitComponent>(50.f, -2.f, 0.f);
+	player->GetComponent<dae::TransformComponent>()->SetParent(empty.get(), true);
+
+	auto player1 = std::make_unique<dae::GameObject>();
+	player1->AddComponent<dae::TextureComponent>("Player.png");
+	player1->GetComponent<dae::TransformComponent>()
+		->SetLocalPosition({ 300.f, 700.f, 0.f });
+	player1->GetComponent<dae::TransformComponent>()
+		->SetScale({ 3.f, 3.f, 0.f });
+	player1->GetComponent<dae::TransformComponent>()->SetParent(player.get(), true);
+	player1->AddComponent<dae::OrbitComponent>(50.f, 2.f, 0.f);
+	scene.Add(std::move(empty));
+	scene.Add(std::move(player));
+	scene.Add(std::move(player1));
 }
 
 static void load()
@@ -220,8 +270,7 @@ static void load()
 	CreateBackground(scene, "Background_Galaga.png");
 	CreateHUD(scene);
 	CreateEnemies(scene);
-
-
+	CreatePlayer(scene);
 
 	dae::SceneManager::GetInstance().SetActiveScene("Game");
 }
