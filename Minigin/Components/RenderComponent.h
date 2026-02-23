@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <SDL3/SDL.h>
 #include "Component.h"
 
 namespace dae
@@ -18,6 +19,16 @@ namespace dae
 		RenderComponent& operator=(const RenderComponent& other) = delete;
 		RenderComponent& operator=(RenderComponent&& other) = delete;
 	protected:
+		struct Rect
+		{
+			float x{};
+			float y{};
+			float width{};
+			float height{};
+		};
+
 		std::shared_ptr<Texture2D> m_texture;
+		SDL_FRect m_SourceRect{0, 0, 0, 0};
+		bool m_UseSourceRect{ false };
 	};
 }

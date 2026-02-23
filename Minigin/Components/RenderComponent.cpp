@@ -32,18 +32,50 @@ void dae::RenderComponent::Render() const
 			rot = rotation.z;
 		}
 
-		const auto size = m_texture->GetSize();
-		const float originalWidth = size.x;
-		const float originalHeight = size.y;
-		const float width = originalWidth * scaleX;
-		const float height = originalHeight * scaleY;
+		float frameWidth{};
+		float frameHeight{};
 
-		x -= (width - originalWidth) * 0.5f;
-		y -= (height - originalHeight) * 0.5f;
+		if (m_UseSourceRect)
+		{
+			frameWidth = m_SourceRect.w;
+			frameHeight = m_SourceRect.h;
+		}
+		else
+		{
+			const auto size = m_texture->GetSize();
+			frameWidth = size.x;
+			frameHeight = size.y;
+		}
+
+		const float width = frameWidth * scaleX;
+		const float height = frameHeight * scaleY;
+
+		x -= (width - frameWidth) * 0.5f;
+		y -= (height - frameHeight) * 0.5f;
 
 		const float centerX = width * 0.5f;
 		const float centerY = height * 0.5f;
 
-		Renderer::GetInstance().RenderTexture(*m_texture, x, y, width, height, rot, centerX, centerY);
+		SDL_FRect destRect{x, y, width, height};
+		if (m_UseSourceRect)
+		{
+			Renderer::GetInstance(). RenderTexture(
+				*m_texture,
+				m_SourceRect,
+				destRect,
+				rot,
+				centerX,
+				centerY
+				);
+		}
+		else
+		{
+			Renderer::GetInstance().RenderTexture(
+				*m_texture,
+				destRect,
+				rot,
+				centerX,
+				centerY);
+		}
 	}
 }

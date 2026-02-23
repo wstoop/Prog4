@@ -11,6 +11,7 @@
 #include "Components/TransformComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TextureComponent.h"
+#include "Components/AnimationComponent.h"
 #include "Components/FormationComponent.h"
 #include "Components/EnemyEntryComponent.h"
 #include "Components/EntryQueueComponent.h"
@@ -136,7 +137,8 @@ void CreateEnemies(dae::Scene& scene)
 	dae::EnemyFactory::Register('B', []()
 		{
 			auto enemy = std::make_unique<dae::GameObject>();
-			enemy->AddComponent<dae::TextureComponent>("bee.png");
+			//enemy->AddComponent<dae::TextureComponent>("bee.png");
+			enemy->AddComponent<dae::AnimationComponent>("beeIdle.png", 2, 1, 0.2f);
 			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
 			return enemy;
 		});
@@ -144,7 +146,8 @@ void CreateEnemies(dae::Scene& scene)
 	dae::EnemyFactory::Register('W', []()
 		{
 			auto enemy = std::make_unique<dae::GameObject>();
-			enemy->AddComponent<dae::TextureComponent>("butterfly.png");
+			//enemy->AddComponent<dae::TextureComponent>("butterfly.png");
+			enemy->AddComponent<dae::AnimationComponent>("butterflyIdle.png", 2, 1, 0.2f);
 			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
 			return enemy;
 		});
@@ -152,7 +155,8 @@ void CreateEnemies(dae::Scene& scene)
 	dae::EnemyFactory::Register('G', []()
 		{
 			auto enemy = std::make_unique<dae::GameObject>();
-			enemy->AddComponent<dae::TextureComponent>("bird.png");
+			//enemy->AddComponent<dae::TextureComponent>("bird.png");
+			enemy->AddComponent<dae::AnimationComponent>("birdIdle.png", 2, 2, 0.2f);
 			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
 			return enemy;
 		});
@@ -192,7 +196,7 @@ void CreateEnemies(dae::Scene& scene)
 			};
 			transform->SetScale({ 3.f, 3.f, 0.f });
 
-			float delay = (row * 0.05f) + (col * 0.05f);
+			float delay = 0.05f * row;
 			enemy->AddComponent<dae::EnemyEntryComponent>(
 				formationPtr,
 				transform,
@@ -214,7 +218,7 @@ void CreateEnemies(dae::Scene& scene)
 	for (int i = 0; i < totalCols / 2; ++i)
 		colPairs.push_back({ i, totalCols - 1 - i });
 
-	bool enterFromLeft = true;
+	bool enterFromLeft = false;
 	for (auto& [leftCol, rightCol] : colPairs)
 	{
 		dae::EntryBatch batch;
@@ -229,7 +233,6 @@ void CreateEnemies(dae::Scene& scene)
 			batch.enemies.push_back(entry);
 		}
 		entryBatches.push_back(batch);
-		enterFromLeft = !enterFromLeft;
 	}
 	formationMover->AddComponent<dae::EntryQueueComponent>(std::move(entryBatches));
 	formationMover->GetComponent<dae::FormationComponent>()->SetAllEnemies(enemyCount);

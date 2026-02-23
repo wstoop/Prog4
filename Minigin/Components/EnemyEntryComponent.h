@@ -26,6 +26,7 @@ namespace dae
 		std::vector<Segment> m_segments;
 		float m_duration{ 1.f };
 		float m_startDelay{ 0.f };
+
 		glm::vec3 m_endPoint{};
 		TransformComponent* m_transform{ nullptr };
 		GameObject* m_formationParent{ nullptr };
@@ -37,12 +38,14 @@ namespace dae
 		bool m_start{false};
 		bool m_fromLeft{ true };
 		void BasicTopEntry(bool fromLeft);
+		void BasicSideEntry(bool fromLeft);
 		void ComputeSegmentTimeRanges();
 
 	public:
 		EnemyEntryComponent(GameObject* owner, GameObject* formationParent, TransformComponent* transform, const glm::vec3& target, float duration, float startDelay);
 		void Update() override;
 		void StartEntryTop(bool fromLeft);
+		void StartEntrySide(bool left);
 		bool GetFromLeft() const { return m_fromLeft; }
 		bool IsDocked() const { return m_done; }
 		void SetEntryDirection(bool fromLeft) { m_fromLeft = fromLeft; }
