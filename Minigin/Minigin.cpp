@@ -17,6 +17,7 @@
 #include "Renderer.h"
 #include "ResourceManager.h"
 #include "TimeManager.h"
+#include "GameInfo.h"
 
 SDL_Window* g_window{};
 
@@ -69,11 +70,14 @@ dae::Minigin::Minigin(const std::filesystem::path& dataPath)
 		SDL_Log("Renderer error: %s", SDL_GetError());
 		throw std::runtime_error(std::string("SDL_Init Error: ") + SDL_GetError());
 	}
-
+	int totalWidth = 800;
+	int height = 830;
+	dae::GameInfo::GetInstance().SetScreenDimensions(totalWidth, height);
+	dae::GameInfo::GetInstance().SetGameScreenWidth(800 - 150);
 	g_window = SDL_CreateWindow(
 		"Galaga - Warre Stoop",
-		800,
-		830,
+		totalWidth,
+		height,
 		SDL_WINDOW_OPENGL
 	);
 	if (g_window == nullptr) 

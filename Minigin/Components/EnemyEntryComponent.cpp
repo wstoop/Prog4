@@ -3,7 +3,7 @@
 #include "FormationComponent.h"
 #include "../GameObject.h"
 #include "../TimeManager.h"
-#include <cstdlib>
+#include "../GameInfo.h"
 
 dae::EnemyEntryComponent::EnemyEntryComponent(GameObject* owner, GameObject* formationParent, TransformComponent* transform, const glm::vec3& target, float duration, float startDelay)
 	: Component(owner)
@@ -38,7 +38,7 @@ void dae::EnemyEntryComponent::Update()
     {
         m_transform->SetLocalPosition(m_endPoint);
         m_transform->SetParent(m_formationParent, true);
-        m_formationParent->GetComponent<FormationComponent>()->EnemyDocked();
+        m_formationParent->GetComponent<FormationComponent>()->RegisterEnemy(m_transform);
         m_transform->SetRotation(0.f, 0.f,0.f);
         m_done = true;
         return;
@@ -95,22 +95,14 @@ void dae::EnemyEntryComponent::Update()
 void dae::EnemyEntryComponent::BasicTopEntry(bool fromLeft)
 {
     float radius = 60.f;
-    float screenWidth = 800.f;
+	int horizontalOffset = 200;
     float direction = fromLeft ? 1.f : -1.f;
 
     glm::vec3 start{};
     glm::vec3 turnEntry{};
     // Phase 0: diagonal entry
-    if(fromLeft)
-    {
-        start = { screenWidth * 0.5f - 200.f, -100.f, 0.f };
-        turnEntry = { screenWidth * 0.6f, 500.f, 0.f };
-    }
-    else
-    {
-        start = { screenWidth * 0.5f + 100.f, -100.f, 0.f };
-        turnEntry = { screenWidth * 0.2f, 500.f, 0.f };
-    }
+    start = { (dae::GameInfo::GetInstance().GetGameWidth() / 2) - (horizontalOffset * direction), -100.f, 0.f };
+    turnEntry = { (dae::GameInfo::GetInstance().GetGameWidth() / 2) + (horizontalOffset * direction), 500.f, 0.f };
 
     Segment lineSeg{};
     lineSeg.type = SegmentType::Line;

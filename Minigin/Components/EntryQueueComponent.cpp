@@ -15,8 +15,13 @@ void dae::EntryQueueComponent::Update()
 
     if (!m_batchStarted)
     {
-        for (auto* entry : m_batches[m_currentBatch].enemies)
-            entry->StartEntryTop(entry->GetFromLeft());
+        std::for_each(
+            m_batches[m_currentBatch].enemies.begin(),
+            m_batches[m_currentBatch].enemies.end(),
+            [](auto* entry)
+            {
+                entry->StartEntryTop(entry->GetFromLeft());
+            });
         m_batchStarted = true;
     }
 

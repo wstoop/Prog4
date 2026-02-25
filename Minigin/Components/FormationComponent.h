@@ -12,13 +12,22 @@ namespace dae
         bool m_moveLeft{ true };
         TransformComponent* m_transform{ nullptr };
 		int m_allEnemies{999};
-		int m_dockedEnemies{0};
+
+        std::vector<TransformComponent*> m_enemyTransforms;
+        std::vector<glm::vec3> m_originalLocalPositions;
+        glm::vec3 m_center{};
+
+        float m_breathTime{};
+        float m_breathSpeed{ 0.8f };
+        float m_breathAmount{ 3.f };
+
 		void LeftRight();
+        void Breathe();
     public:
         FormationComponent(GameObject* owner);
         
         void Update() override;
-		void SetAllEnemies(int enemyCount) { m_allEnemies = enemyCount; }
-		void EnemyDocked() { ++m_dockedEnemies; }
+        void SetAllEnemies(int enemyCount);
+        void RegisterEnemy(TransformComponent* enemyTransform);
     };
 }
