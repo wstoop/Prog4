@@ -272,7 +272,7 @@ static void load()
 	auto& scene = dae::SceneManager::GetInstance().CreateScene("Game");
 	CreateBackground(scene, "Background_Galaga.png");
 	CreateHUD(scene);
-	CreateEnemies(scene);
+	//CreateEnemies(scene);
 	CreatePlayer(scene);
 
 	dae::SceneManager::GetInstance().SetActiveScene("Game");
