@@ -4,8 +4,10 @@
 
 namespace dae
 {
+	class TransformComponent;
     class OrbitComponent final : public Component
     {
+        TransformComponent* m_transform{};
         float m_radius{};
         float m_speed{};
         float m_angle{};

@@ -9,21 +9,21 @@ dae::OrbitComponent::OrbitComponent(GameObject* owner, float radius, float speed
     , m_speed(speed)
     , m_angle(startAngle)
 {
+	m_transform = GetOwner()->GetComponent<TransformComponent>();
 }
 
 void dae::OrbitComponent::Update()
 {
-    auto transform = GetOwner()->GetComponent<TransformComponent>();
-    if (!transform)
+    if (!m_transform)
         return;
-
-    if (!transform->GetParent())
-        return;
-
     m_angle += m_speed * TimeManager::GetInstance().GetDeltaTime();
+	if (m_angle > 2.f * 3.14159265f)
+        m_angle = fmod(m_angle, 2.f * 3.14159265f);
+	if (m_angle < -2.f * 3.14159265f)
+        m_angle = fmod(m_angle, -2.f * 3.14159265f);
 
     float x = std::cos(m_angle) * m_radius;
     float y = std::sin(m_angle) * m_radius;
 
-    transform->SetLocalPosition(glm::vec3(x, y, 0.f));
+    m_transform->SetLocalPosition(glm::vec3(x, y, 0.f));
 }
