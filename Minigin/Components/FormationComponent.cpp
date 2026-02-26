@@ -12,7 +12,7 @@ dae::FormationComponent::FormationComponent(GameObject* owner)
 
 void dae::FormationComponent::Update()
 {
-	if (m_enemyTransforms.size() < m_allEnemies)
+	if (static_cast<int>(m_enemyTransforms.size()) < m_allEnemies)
 		return;
 
 	Breathe();

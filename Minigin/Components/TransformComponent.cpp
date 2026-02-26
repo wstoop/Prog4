@@ -1,5 +1,6 @@
 #include "TransformComponent.h"
 #include "../GameObject.h"
+#include <algorithm>
 
 
 dae::TransformComponent::TransformComponent(GameObject* owner):
@@ -107,8 +108,10 @@ bool dae::TransformComponent::IsChild(GameObject* child) const
 void dae::TransformComponent::SetPositionDirty()
 {
     m_positionIsDirty = true;
-    for (auto child : m_children)
+    std::for_each(m_children.begin(), m_children.end(), [](GameObject* child) {
         child->GetComponent<TransformComponent>()->SetPositionDirty();
+		});
+
 }
 
 dae::GameObject* dae::TransformComponent::GetParent()
