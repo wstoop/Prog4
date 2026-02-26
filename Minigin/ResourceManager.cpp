@@ -1,4 +1,5 @@
 ﻿#include <stdexcept>
+#include <fstream>
 #include <SDL3_ttf/SDL_ttf.h>
 #include "ResourceManager.h"
 #include "Renderer.h"
@@ -35,6 +36,29 @@ std::shared_ptr<dae::Font> dae::ResourceManager::LoadFont(const std::string& fil
 		m_loadedFonts.insert(std::pair(key,std::make_shared<Font>(fullPath.string(), size)));
 	return m_loadedFonts.at(key);
 }
+
+std::vector<std::string> dae::ResourceManager::LoadFormation(const std::string & file)
+{
+	const auto fullPath = m_dataPath / file;
+	const auto filename = fs::path(fullPath).filename().string();
+
+
+	std::vector<std::string> lines;
+	std::ifstream openedFile(fullPath);
+
+	if (!openedFile.is_open())
+	{
+		throw std::runtime_error(std::string("No formation file found"));
+	}
+	std::string line;
+	while (std::getline(openedFile, line))
+	{
+		lines.push_back(line);
+	}
+
+	return lines;
+}
+
 
 void dae::ResourceManager::UnloadUnusedResources()
 {

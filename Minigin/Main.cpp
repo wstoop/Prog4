@@ -114,24 +114,6 @@ void CreateHUD(dae::Scene& scene)
 	CreateSpriteRow("levelCounter.png", level, baseY + verticalSpacing * 4);
 }
 
-std::vector<std::string> LoadFormation(const std::string& path)
-{
-	std::vector<std::string> lines;
-	std::ifstream file(path);
-
-	if (!file.is_open())
-	{
-		throw std::runtime_error(std::string("No formation file found"));
-	}
-	std::string line;
-	while (std::getline(file, line))
-	{
-		lines.push_back(line);
-	}
-
-	return lines;
-}
-
 void CreateEnemies(dae::Scene& scene)
 {
 	dae::EnemyFactory::Register('B', []()
@@ -164,7 +146,7 @@ void CreateEnemies(dae::Scene& scene)
 	float spacingX{ 45.f };
 	float spacingY{ 40.f };
 
-	auto formationData = LoadFormation("./Data/formation1.txt");
+	auto formationData = dae::ResourceManager::GetInstance().LoadFormation("formation1.txt");
 
 	auto formationMover = std::make_unique<dae::GameObject>();
 	formationMover->GetComponent<dae::TransformComponent>()
@@ -272,7 +254,7 @@ static void load()
 	auto& scene = dae::SceneManager::GetInstance().CreateScene("Game");
 	CreateBackground(scene, "Background_Galaga.png");
 	CreateHUD(scene);
-	//CreateEnemies(scene);
+	CreateEnemies(scene);
 	CreatePlayer(scene);
 
 	dae::SceneManager::GetInstance().SetActiveScene("Game");
