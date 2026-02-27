@@ -11,6 +11,6 @@ The project uses **SDL3** for windowing, input and rendering, and **glm** for ve
 ## Goal
 
 This project was made as the exam assignment for the course Programming 4 at DAE.  
-The goal is to recreate a given arcade game, which in my case was **Galaga**, using a self‑built engine.
+The goal is to recreate a given arcade game, which in my case is **Galaga**, using a self‑built engine.
 
 The design of the engine is based on patterns from *Game Programming Patterns* by Robert Nystrom that were discussed during the course.
