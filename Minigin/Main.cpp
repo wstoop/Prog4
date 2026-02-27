@@ -17,6 +17,7 @@
 #include "Components/EntryQueueComponent.h"
 #include "Components/OrbitComponent.h"
 #include "Components/ScrollBackgroundComponent.h"
+#include "Components/ThrashCacheComponent.h"
 #include "EnemyFactory.h"
 #include "Scene.h"
 #include <fstream>
@@ -249,6 +250,12 @@ void CreatePlayer(dae::Scene& scene)
 	scene.Add(std::move(player1));
 }
 
+void CreateThrashCache(dae::Scene& scene)
+{
+	auto go = std::make_unique<dae::GameObject>();
+	go->AddComponent<dae::ThrashCacheComponent>();
+	scene.Add(std::move(go));
+}
 static void load()
 {
 	auto& scene = dae::SceneManager::GetInstance().CreateScene("Game");
@@ -256,6 +263,7 @@ static void load()
 	CreateHUD(scene);
 	CreateEnemies(scene);
 	CreatePlayer(scene);
+	CreateThrashCache(scene);
 
 	dae::SceneManager::GetInstance().SetActiveScene("Game");
 }

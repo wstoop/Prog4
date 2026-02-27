@@ -12,7 +12,7 @@ namespace dae
 	public:
 		RenderComponent(GameObject* owner);
 		virtual ~RenderComponent() override = default;
-		void Render() const;
+		virtual void Render();
 
 		RenderComponent(const RenderComponent& other) = delete;
 		RenderComponent(RenderComponent&& other) = delete;

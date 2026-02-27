@@ -9,7 +9,7 @@ dae::RenderComponent::RenderComponent(GameObject* owner):
 {
 }
 
-void dae::RenderComponent::Render() const
+void dae::RenderComponent::Render()
 {
 	if (m_texture != nullptr)
 	{
