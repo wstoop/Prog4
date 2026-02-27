@@ -5,10 +5,8 @@ It started from the [Minigin](https://github.com/avadae/minigin) template, but t
 
 The project uses **SDL3** for windowing, input and rendering, and **glm** for vector math.
 
-[![CMake Build](https://github.com/<your-user>/<your-repo>/actions/workflows/cmake.yml/badge.svg)](https://github.com/<your-user>/<your-repo>/actions/workflows/cmake.yml)
-[![Emscripten Build](https://github.com/<your-user>/<your-repo>/actions/workflows/emscripten.yml/badge.svg)](https://github.com/<your-user>/<your-repo>/actions/workflows/emscripten.yml)
-
----
+[![CMake Build](https://github.com/wstoop/Prog4/actions/workflows/cmake.yml/badge.svg)](https://github.com/wstoop/Prog4/actions/workflows/cmake.yml)
+[![Emscripten Build](https://github.com/wstoop/Prog4/actions/workflows/emscripten.yml/badge.svg)](https://github.com/wstoop/Pog4/actions/workflows/emscripten.yml)
 
 ## Goal
 
