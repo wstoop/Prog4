@@ -46,6 +46,7 @@ void dae::Renderer::Render() const
 	if(ImGui::GetDrawData())
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), m_renderer);
 	SDL_RenderPresent(m_renderer);
+	
 }
 
 void dae::Renderer::Destroy()

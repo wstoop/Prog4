@@ -18,6 +18,8 @@
 #include "Components/OrbitComponent.h"
 #include "Components/ScrollBackgroundComponent.h"
 #include "Components/ThrashCacheComponent.h"
+#include "Input/InputManager.h"
+#include "Commands/MoveCommand.h"
 #include "EnemyFactory.h"
 #include "Scene.h"
 #include <fstream>
@@ -224,18 +226,7 @@ void CreateEnemies(dae::Scene& scene)
 
 void CreatePlayer(dae::Scene& scene)
 {
-	auto empty = std::make_unique<dae::GameObject>();
-	empty->GetComponent<dae::TransformComponent>()
-		->SetLocalPosition({ 300.f, 700.f, 0.f });
-
-	auto player = std::make_unique<dae::GameObject>();
-	player->AddComponent<dae::TextureComponent>("Player.png");
-	player->GetComponent<dae::TransformComponent>()
-		->SetLocalPosition({ 300.f, 700.f, 0.f });
-	player->GetComponent<dae::TransformComponent>()
-		->SetScale({ 3.f, 3.f, 0.f });
-	player->AddComponent<dae::OrbitComponent>(50.f, -2.f, 0.f);
-	player->GetComponent<dae::TransformComponent>()->SetParent(empty.get(), true);
+	auto& input = dae::InputManager::GetInstance();
 
 	auto player1 = std::make_unique<dae::GameObject>();
 	player1->AddComponent<dae::TextureComponent>("Player.png");
@@ -243,11 +234,30 @@ void CreatePlayer(dae::Scene& scene)
 		->SetLocalPosition({ 300.f, 700.f, 0.f });
 	player1->GetComponent<dae::TransformComponent>()
 		->SetScale({ 3.f, 3.f, 0.f });
-	player1->GetComponent<dae::TransformComponent>()->SetParent(player.get(), true);
-	player1->AddComponent<dae::OrbitComponent>(50.f, 2.f, 0.f);
-	scene.Add(std::move(empty));
-	scene.Add(std::move(player));
+
+	input.AddController(0);
+	input.BindCommand(
+		{ 0, dae::Thumbstick::Left },
+		std::make_unique<MoveCommand>(player1.get(), 100.f)
+	);
+
 	scene.Add(std::move(player1));
+
+	//auto player2 = std::make_unique<dae::GameObject>();
+	//player2->AddComponent<dae::TextureComponent>("Player.png");
+	//player2->GetComponent<dae::TransformComponent>()
+	//	->SetLocalPosition({ 300.f, 800.f, 0.f });
+	//player2->GetComponent<dae::TransformComponent>()
+	//	->SetScale({ 3.f, 3.f, 0.f });
+
+	//input.AddController(1);
+	//input.BindCommand(
+	//	{ 1, dae::Thumbstick::Left },
+	//	std::make_unique<MoveCommand>(player2.get(), 100.f)
+	//);
+
+	//scene.Add(std::move(player2));
+
 }
 
 void CreateThrashCache(dae::Scene& scene)
@@ -263,7 +273,7 @@ static void load()
 	CreateHUD(scene);
 	CreateEnemies(scene);
 	CreatePlayer(scene);
-	CreateThrashCache(scene);
+	//CreateThrashCache(scene);
 
 	dae::SceneManager::GetInstance().SetActiveScene("Game");
 }

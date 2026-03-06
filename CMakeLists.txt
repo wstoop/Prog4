@@ -17,7 +17,7 @@ endif()
 add_executable(${TARGET_NAME} ${TARGET_PARAM}
   Minigin/Font.cpp
   Minigin/GameObject.cpp
-  Minigin/InputManager.cpp
+  "Minigin/Input/InputManager.cpp"
   Minigin/Main.cpp
   Minigin/Minigin.cpp
   Minigin/Renderer.cpp
@@ -27,7 +27,7 @@ add_executable(${TARGET_NAME} ${TARGET_PARAM}
   
   Minigin/Texture2D.cpp
   
- "Minigin/TimeManager.h"  "Minigin/Components/Component.h"  "Minigin/Components/TextComponent.h" "Minigin/Components/TextComponent.cpp"  "Minigin/Components/TransformComponent.h"  "Minigin/Components/RenderComponent.h" "Minigin/Components/TextureComponent.h" "Minigin/Components/TextureComponent.cpp" "Minigin/Components/FPSComponent.h" "Minigin/Components/FPSComponent.cpp" "Minigin/Components/TransformComponent.cpp" "Minigin/Components/RenderComponent.cpp" "Minigin/Components/RotateAndScaleComponent.h" "Minigin/Components/RotateAndScaleComponent.cpp" "Minigin/Components/OrbitComponent.h" "Minigin/Components/OrbitComponent.cpp"   "Minigin/Components/FormationComponent.cpp" "Minigin/Components/FormationComponent.h" "Minigin/EnemyFactory.h" "Minigin/EnemyFactory.cpp" "Minigin/Components/EnemyEntryComponent.h" "Minigin/Components/EnemyEntryComponent.cpp" "Minigin/Components/EntryQueueComponent.h" "Minigin/Components/EntryQueueComponent.cpp" "Minigin/Components/ScrollBackgroundComponent.h" "Minigin/Components/ScrollBackgroundComponent.cpp" "Minigin/Components/AnimationComponent.h" "Minigin/Components/AnimationComponent.cpp" "Minigin/GameInfo.h" "Minigin/Components/ThrashCacheComponent.h" "Minigin/Components/ThrashCacheComponent.cpp" "Minigin/Components/imgui_plot.h" "Minigin/Components/imgui_plot.cpp")
+ "Minigin/TimeManager.h"  "Minigin/Components/Component.h"  "Minigin/Components/TextComponent.h" "Minigin/Components/TextComponent.cpp"  "Minigin/Components/TransformComponent.h"  "Minigin/Components/RenderComponent.h" "Minigin/Components/TextureComponent.h" "Minigin/Components/TextureComponent.cpp" "Minigin/Components/FPSComponent.h" "Minigin/Components/FPSComponent.cpp" "Minigin/Components/TransformComponent.cpp" "Minigin/Components/RenderComponent.cpp" "Minigin/Components/RotateAndScaleComponent.h" "Minigin/Components/RotateAndScaleComponent.cpp" "Minigin/Components/OrbitComponent.h" "Minigin/Components/OrbitComponent.cpp"   "Minigin/Components/FormationComponent.cpp" "Minigin/Components/FormationComponent.h" "Minigin/EnemyFactory.h" "Minigin/EnemyFactory.cpp" "Minigin/Components/EnemyEntryComponent.h" "Minigin/Components/EnemyEntryComponent.cpp" "Minigin/Components/EntryQueueComponent.h" "Minigin/Components/EntryQueueComponent.cpp" "Minigin/Components/ScrollBackgroundComponent.h" "Minigin/Components/ScrollBackgroundComponent.cpp" "Minigin/Components/AnimationComponent.h" "Minigin/Components/AnimationComponent.cpp" "Minigin/GameInfo.h" "Minigin/Components/ThrashCacheComponent.h" "Minigin/Components/ThrashCacheComponent.cpp" "Minigin/Components/imgui_plot.h" "Minigin/Components/imgui_plot.cpp" "Minigin/Commands/Command.h"  "Minigin/Input/Controller.h" "Minigin/Input/Controller.cpp" "Minigin/Commands/MoveCommand.h")
 
 # enable c++20 features
 target_compile_features(${TARGET_NAME} PUBLIC cxx_std_20)
@@ -121,7 +121,7 @@ add_library(imgui STATIC
   ${imgui_SOURCE_DIR}/imgui_demo.cpp
   ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
   ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
- "Minigin/Components/ThrashCacheComponent.h" "Minigin/Components/ThrashCacheComponent.cpp" "Minigin/Components/imgui_plot.h" "Minigin/Components/imgui_plot.cpp")
+  )
 
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${sdl3_SOURCE_DIR}/include)
 target_link_libraries(imgui PUBLIC SDL3::SDL3)
@@ -151,6 +151,7 @@ target_link_libraries("${TARGET_NAME}" PUBLIC
   SDL3_ttf::SDL3_ttf
   glm::glm
   imgui
+  xinput
   ${VLD_LIBRARIES}
 )
 
