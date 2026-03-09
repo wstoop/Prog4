@@ -1,3 +1,4 @@
+#pragma once
 #include <glm/glm.hpp>
 #include <memory>
 
@@ -33,6 +34,7 @@ public:
     bool IsUpThisFrame(Button button) const;
     bool IsPressed(Button button) const;
 
+    glm::vec2 GetDPad() const;
     glm::vec2 GetLeftThumbstick() const;
     glm::vec2 GetRightThumbstick() const;
 };

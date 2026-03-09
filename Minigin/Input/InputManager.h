@@ -13,7 +13,7 @@ namespace dae
 		Up,
 		Pressed
 	};
-	enum class Thumbstick { Left, Right };
+	enum class Thumbstick { Left, Right, DPad };
 	class InputManager final : public Singleton<InputManager>
 	{
 	public:

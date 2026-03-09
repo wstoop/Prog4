@@ -20,9 +20,11 @@
 #include "Components/ThrashCacheComponent.h"
 #include "Input/InputManager.h"
 #include "Commands/MoveCommand.h"
+#include "Commands/ShootCommand.h"
+#include "Input/Controller.h"
 #include "EnemyFactory.h"
 #include "Scene.h"
-#include <fstream>
+#include "BulletPool.h"
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -237,26 +239,32 @@ void CreatePlayer(dae::Scene& scene)
 
 	input.AddController(0);
 	input.BindCommand(
-		{ 0, dae::Thumbstick::Left },
+		{ 0, dae::Thumbstick::DPad },
 		std::make_unique<MoveCommand>(player1.get(), 100.f)
 	);
 
 	scene.Add(std::move(player1));
 
-	//auto player2 = std::make_unique<dae::GameObject>();
-	//player2->AddComponent<dae::TextureComponent>("Player.png");
-	//player2->GetComponent<dae::TransformComponent>()
-	//	->SetLocalPosition({ 300.f, 800.f, 0.f });
-	//player2->GetComponent<dae::TransformComponent>()
-	//	->SetScale({ 3.f, 3.f, 0.f });
+	auto player2 = std::make_unique<dae::GameObject>();
+	player2->AddComponent<dae::TextureComponent>("Player.png");
+	player2->AddComponent<dae::ShootComponent>(800.f);
+	player2->GetComponent<dae::TransformComponent>()
+		->SetLocalPosition({ 300.f, 800.f, 0.f });
+	player2->GetComponent<dae::TransformComponent>()
+		->SetScale({ 3.f, 3.f, 0.f });
 
-	//input.AddController(1);
-	//input.BindCommand(
-	//	{ 1, dae::Thumbstick::Left },
-	//	std::make_unique<MoveCommand>(player2.get(), 100.f)
-	//);
+	input.BindCommand(
+		{ 0, dae::Thumbstick::Left },
+		std::make_unique<MoveCommand>(player2.get(), 100.f)
+	);
 
-	//scene.Add(std::move(player2));
+	input.BindCommand(
+		{ 0, Controller::Button::ButtonB },
+		dae::KeyState::Down,
+		std::make_unique<ShootCommand>(player2.get())
+	);
+
+	scene.Add(std::move(player2));
 
 }
 
@@ -270,6 +278,7 @@ static void load()
 {
 	auto& scene = dae::SceneManager::GetInstance().CreateScene("Game");
 	CreateBackground(scene, "Background_Galaga.png");
+	dae::BulletPool::GetInstance().Initialize(&scene, 15);
 	CreateHUD(scene);
 	CreateEnemies(scene);
 	CreatePlayer(scene);

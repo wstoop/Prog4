@@ -115,9 +115,13 @@ bool dae::InputManager::ProcessInput()
             continue;
 
         auto& controller = it->second;
-        glm::vec2 axis = (thumbstick == Thumbstick::Left)
-            ? controller->GetLeftThumbstick()
-            : controller->GetRightThumbstick();
+        glm::vec2 axis;
+        if (thumbstick == Thumbstick::Left)
+            axis = controller->GetLeftThumbstick();
+        else if (thumbstick == Thumbstick::Right)
+            axis = controller->GetRightThumbstick();
+        else
+            axis = controller->GetDPad();
 
         command->Execute(axis);
             

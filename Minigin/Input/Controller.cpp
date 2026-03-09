@@ -53,7 +53,7 @@ public:
     bool IsPressed(Controller::Button button) const;
 	glm::vec2 GetLeftThumbstick() const;
 	glm::vec2 GetRightThumbstick() const;
-
+    glm::vec2 GetDPad() const;
     bool IsConnected() const;
 };
 Controller::ControllerImpl::ControllerImpl(uint32_t index)
@@ -70,7 +70,6 @@ void Controller::ControllerImpl::Update()
     DWORD result = XInputGetState(m_controllerIndex, &m_currentState);
     if (result != ERROR_SUCCESS)
     {
-        // Controller not connected, put a breakpoint here!
         return;
     }
 
@@ -121,6 +120,16 @@ bool Controller::ControllerImpl::IsPressed(Controller::Button button) const
     return m_currentState.Gamepad.wButtons & static_cast<uint16_t>(button);
 }
 
+glm::vec2 Controller::ControllerImpl::GetDPad() const
+{
+    glm::vec2 dir{ 0.f, 0.f };
+    if (IsPressed(Button::DpadRight)) dir.x += 1.f;
+    if (IsPressed(Button::DpadLeft))  dir.x -= 1.f;
+    if (IsPressed(Button::DpadUp))    dir.y += 1.f;
+    if (IsPressed(Button::DpadDown))  dir.y -= 1.f;
+    return dir;
+}
+
 Controller::Controller(uint32_t controllerIndex)
 	: m_impl(std::make_unique<ControllerImpl>(controllerIndex))
 {
@@ -160,4 +169,9 @@ glm::vec2 Controller::GetRightThumbstick() const
 bool Controller::IsConnected() const
 {
     return m_impl->IsConnected();
+}
+
+glm::vec2 Controller::GetDPad() const
+{
+    return m_impl->GetDPad();
 }
