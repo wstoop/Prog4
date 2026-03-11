@@ -1,53 +1,53 @@
 #include "Controller.h"
 #ifdef __EMSCRIPTEN__
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 class Controller::ControllerImpl
 {
-    uint16_t m_previousButtons{ 0 };
-    uint16_t m_currentButtons{ 0 };
-    uint16_t m_buttonsPressedThisFrame{ 0 };
-    uint16_t m_buttonsReleasedThisFrame{ 0 };
-    SDL_GameController* m_pGamepad;
+    SDL_Gamepad* m_pGamepad;
+    uint16_t      m_previousButtons{ 0 };
+    uint16_t      m_currentButtons{ 0 };
+    uint16_t      m_buttonsPressedThisFrame{ 0 };
+    uint16_t      m_buttonsReleasedThisFrame{ 0 };
 
     static constexpr float k_deadZone = 0.2f;
 
-    static bool SDLButtonPressed(SDL_GameController* pad, SDL_GameControllerButton btn)
+    static bool SDLButtonPressed(SDL_Gamepad* pad, SDL_GamepadButton sdlBtn)
     {
-        return SDL_GameControllerGetButton(pad, btn) != 0;
+        return SDL_GetGamepadButton(pad, sdlBtn) != 0;
     }
 
     uint16_t SampleButtons() const
     {
         if (!m_pGamepad) return 0;
         uint16_t state = 0;
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_DPAD_UP))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_DPAD_UP))
             state |= static_cast<uint16_t>(Controller::Button::DpadUp);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN))
             state |= static_cast<uint16_t>(Controller::Button::DpadDown);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT))
             state |= static_cast<uint16_t>(Controller::Button::DpadLeft);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT))
             state |= static_cast<uint16_t>(Controller::Button::DpadRight);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_START))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_START))
             state |= static_cast<uint16_t>(Controller::Button::Start);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_BACK))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_BACK))
             state |= static_cast<uint16_t>(Controller::Button::Back);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_LEFTSTICK))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_LEFT_STICK))
             state |= static_cast<uint16_t>(Controller::Button::LeftThumb);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_RIGHTSTICK))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK))
             state |= static_cast<uint16_t>(Controller::Button::RightThumb);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_LEFTSHOULDER))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER))
             state |= static_cast<uint16_t>(Controller::Button::LeftShoulder);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER))
             state |= static_cast<uint16_t>(Controller::Button::RightShoulder);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_A))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_SOUTH))
             state |= static_cast<uint16_t>(Controller::Button::ButtonA);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_B))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_EAST))
             state |= static_cast<uint16_t>(Controller::Button::ButtonB);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_X))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_WEST))
             state |= static_cast<uint16_t>(Controller::Button::ButtonX);
-        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_Y))
+        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_NORTH))
             state |= static_cast<uint16_t>(Controller::Button::ButtonY);
         return state;
     }
@@ -61,14 +61,17 @@ public:
     explicit ControllerImpl(uint32_t index)
         : m_pGamepad(nullptr)
     {
-        if (SDL_IsGameController(static_cast<int>(index)))
-            m_pGamepad = SDL_GameControllerOpen(static_cast<int>(index));
+        int count = 0;
+        SDL_JoystickID* joysticks = SDL_GetGamepads(&count);
+        if (joysticks && static_cast<int>(index) < count)
+            m_pGamepad = SDL_OpenGamepad(joysticks[index]);
+        SDL_free(joysticks);
     }
 
     ~ControllerImpl()
     {
         if (m_pGamepad)
-            SDL_GameControllerClose(m_pGamepad);
+            SDL_CloseGamepad(m_pGamepad);
     }
 
     void Update()
@@ -83,7 +86,7 @@ public:
 
     bool IsConnected() const
     {
-        return m_pGamepad != nullptr && SDL_GameControllerGetAttached(m_pGamepad);
+        return m_pGamepad != nullptr && SDL_GamepadConnected(m_pGamepad);
     }
 
     bool IsDownThisFrame(Controller::Button button) const
@@ -104,16 +107,16 @@ public:
     glm::vec2 GetLeftThumbstick() const
     {
         if (!m_pGamepad) return { 0.f, 0.f };
-        float x = SDL_GameControllerGetAxis(m_pGamepad, SDL_CONTROLLER_AXIS_LEFTX) / 32767.f;
-        float y = SDL_GameControllerGetAxis(m_pGamepad, SDL_CONTROLLER_AXIS_LEFTY) / 32767.f;
+        float x = SDL_GetGamepadAxis(m_pGamepad, SDL_GAMEPAD_AXIS_LEFTX) / 32767.f;
+        float y = SDL_GetGamepadAxis(m_pGamepad, SDL_GAMEPAD_AXIS_LEFTY) / 32767.f;
         return { ApplyDeadzone(x), ApplyDeadzone(-y) };
     }
 
     glm::vec2 GetRightThumbstick() const
     {
         if (!m_pGamepad) return { 0.f, 0.f };
-        float x = SDL_GameControllerGetAxis(m_pGamepad, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.f;
-        float y = SDL_GameControllerGetAxis(m_pGamepad, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.f;
+        float x = SDL_GetGamepadAxis(m_pGamepad, SDL_GAMEPAD_AXIS_RIGHTX) / 32767.f;
+        float y = SDL_GetGamepadAxis(m_pGamepad, SDL_GAMEPAD_AXIS_RIGHTY) / 32767.f;
         return { ApplyDeadzone(x), ApplyDeadzone(-y) };
     }
 
@@ -121,9 +124,9 @@ public:
     {
         glm::vec2 dir{ 0.f, 0.f };
         if (IsPressed(Controller::Button::DpadRight)) dir.x += 1.f;
-        if (IsPressed(Controller::Button::DpadLeft))  dir.x -= 1.f;
-        if (IsPressed(Controller::Button::DpadUp))    dir.y += 1.f;
-        if (IsPressed(Controller::Button::DpadDown))  dir.y -= 1.f;
+        if (IsPressed(Controller::Button::DpadLeft)) dir.x -= 1.f;
+        if (IsPressed(Controller::Button::DpadUp)) dir.y += 1.f;
+        if (IsPressed(Controller::Button::DpadDown)) dir.y -= 1.f;
         return dir;
     }
 };
@@ -199,14 +202,10 @@ public:
     glm::vec2 GetDPad() const
     {
         glm::vec2 dir{ 0.f, 0.f };
-        if (IsPressed(Controller::Button::DpadRight))
-            dir.x += 1.f;
-        if (IsPressed(Controller::Button::DpadLeft))
-            dir.x -= 1.f;
-        if (IsPressed(Controller::Button::DpadUp))
-            dir.y += 1.f;
-        if (IsPressed(Controller::Button::DpadDown))
-            dir.y -= 1.f;
+        if (IsPressed(Controller::Button::DpadRight)) dir.x += 1.f;
+        if (IsPressed(Controller::Button::DpadLeft)) dir.x -= 1.f;
+        if (IsPressed(Controller::Button::DpadUp)) dir.y += 1.f;
+        if (IsPressed(Controller::Button::DpadDown)) dir.y -= 1.f;
         return dir;
     }
 };
@@ -220,7 +219,7 @@ Controller::Controller(uint32_t controllerIndex)
 Controller::~Controller() = default;
 
 void Controller::Update()
-{ 
+{
     m_impl->Update();
 }
 bool Controller::IsConnected() const

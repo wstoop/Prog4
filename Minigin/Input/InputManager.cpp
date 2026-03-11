@@ -1,11 +1,5 @@
-#ifdef __EMSCRIPTEN__
-#include <SDL.h>
-#include <backends/imgui_impl_sdl2.h>
-#else
 #include <SDL3/SDL.h>
 #include <backends/imgui_impl_sdl3.h>
-#endif
-
 #include "InputManager.h"
 #include "Controller.h"
 #include <map>
@@ -104,20 +98,6 @@ namespace dae
             SDL_Event e;
             while (SDL_PollEvent(&e))
             {
-#ifdef __EMSCRIPTEN__
-                if (e.type == SDL_QUIT)
-                    return false;
-
-                if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
-                {
-                    KeyState state = (e.type == SDL_KEYDOWN) ? KeyState::Down : KeyState::Up;
-                    KeyboardBindKey key{ static_cast<int>(e.key.keysym.scancode), state };
-                    auto it = m_keyboardCommands.find(key);
-                    if (it != m_keyboardCommands.end())
-                        it->second->Execute();
-                }
-                ImGui_ImplSDL2_ProcessEvent(&e);
-#else
                 if (e.type == SDL_EVENT_QUIT)
                     return false;
 
@@ -129,8 +109,8 @@ namespace dae
                     if (it != m_keyboardCommands.end())
                         it->second->Execute();
                 }
+
                 ImGui_ImplSDL3_ProcessEvent(&e);
-#endif
             }
 
             // Keyboard held (Pressed state)
