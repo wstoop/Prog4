@@ -216,7 +216,7 @@ namespace ImGui {
                         uint32_t end = start;
                         if (conf.selection.sanitize_fn)
                             end = conf.selection.sanitize_fn(end - start) + start;
-                        if (static_cast<size_t>(end) < conf.values.offset + conf.values.count) {
+                        if (static_cast<int>(end) < conf.values.offset + conf.values.count) {
                             *conf.selection.start = start;
                             *conf.selection.length = end - start;
                             status = PlotStatus::selection_updated;
@@ -232,7 +232,7 @@ namespace ImGui {
                         if (end > start) {
                             if (conf.selection.sanitize_fn)
                                 end = conf.selection.sanitize_fn(end - start) + start;
-                            if (static_cast<size_t>(end) < conf.values.offset + conf.values.count) {
+                            if (static_cast<int>(end) < conf.values.offset + conf.values.count) {
                                 *conf.selection.length = end - start;
                                 status = PlotStatus::selection_updated;
                             }
