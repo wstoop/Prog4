@@ -134,7 +134,7 @@ namespace dae
             }
 
             // Keyboard held (Pressed state)
-            const bool* kb = SDL_GetKeyboardState(nullptr);
+            const auto* kb = SDL_GetKeyboardState(nullptr);
             for (const auto& [key, command] : m_keyboardCommands)
             {
                 if (key.state == KeyState::Pressed && kb[key.scancode])
