@@ -28,6 +28,11 @@ public:
     Controller(uint32_t controllerIndex);
     ~Controller();
 
+    Controller(const Controller&) = delete;
+    Controller& operator=(const Controller&) = delete;
+    Controller(Controller&&) = default;
+    Controller& operator=(Controller&&) = default;
+
     void Update();
 	bool IsConnected() const;
     bool IsDownThisFrame(Button button) const;

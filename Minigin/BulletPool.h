@@ -2,22 +2,22 @@
 #include <vector>
 #include <memory>
 #include "Singleton.h"
-#include "Components/Component.h"
 
 namespace dae
 {
     class GameObject;
-    class Scene;
+
     class BulletPool final : public Singleton<BulletPool>
     {
     public:
-        void Initialize(dae::Scene* scene, int poolSize);
         GameObject* GetBullet();
         void ReturnBullet(GameObject* bullet);
-
+        void Update();
+        void Render() const;
     private:
         friend class Singleton<BulletPool>;
         BulletPool() = default;
-        std::vector<std::pair<GameObject*, bool>> m_bullets;
+        std::unique_ptr<GameObject> CreateBullet() const;
+        std::vector<std::unique_ptr<GameObject>> m_bullets;
     };
 }

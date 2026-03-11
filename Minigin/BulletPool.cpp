@@ -3,54 +3,61 @@
 #include "Components/BulletComponent.h"
 #include "Components/TextureComponent.h"
 #include "Components/TransformComponent.h"
-#include "Scene.h"
+#include <memory>
+#include <algorithm>
+#include <iterator>
 
 namespace dae
 {
-    void BulletPool::Initialize(dae::Scene* scene, int poolSize)
+    std::unique_ptr<GameObject> BulletPool::CreateBullet() const
     {
-        m_bullets.reserve(poolSize);
-
-        for (int i = 0; i < poolSize; ++i)
-        {
-            auto bullet = std::make_unique<GameObject>();
-            bullet->AddComponent<BulletComponent>();
-            bullet->AddComponent<TextureComponent>("bullet.png");
-			bullet->GetComponent<TransformComponent>()->SetScale({ 3.f, 3.f, 3.f });
-            bullet->GetComponent<dae::TransformComponent>()
-                ->SetLocalPosition({ -300.f, -800.f, 0.f });
-            GameObject* rawPtr = bullet.get();
-            scene->Add(std::move(bullet));
-            m_bullets.emplace_back(rawPtr, false);
-        }
+        auto bullet = std::make_unique<GameObject>();
+        bullet->AddComponent<BulletComponent>();
+        bullet->AddComponent<TextureComponent>("bullet.png");
+        bullet->GetComponent<TransformComponent>()->SetScale({ 3.f, 3.f, 3.f });
+        bullet->GetComponent<BulletComponent>()->SetActive(false);
+        return bullet;
     }
 
     GameObject* BulletPool::GetBullet()
     {
-        for (auto& [bullet, inUse] : m_bullets)
-        {
-            if (!inUse)
+        auto it = std::find_if(m_bullets.begin(), m_bullets.end(), [](const std::unique_ptr<GameObject>& bullet)
             {
-                inUse = true;
-                return bullet;
-            }
+                return !bullet->GetComponent<BulletComponent>()->IsActive();
+            });
+
+        if (it == m_bullets.end())
+        {
+            m_bullets.emplace_back(CreateBullet());
+            it = std::prev(m_bullets.end());
         }
 
-        // Pool exhausted
-        return nullptr;
+        (*it)->GetComponent<BulletComponent>()->SetActive(true);
+        return it->get();
     }
 
     void BulletPool::ReturnBullet(GameObject* bullet)
     {
-        if (bullet == nullptr) return;
+        if (!bullet) return;
+        bullet->GetComponent<BulletComponent>()->SetActive(false);
+    }
 
-        for (auto& [poolBullet, inUse] : m_bullets)
-        {
-            if (poolBullet == bullet)
+    void BulletPool::Update()
+    {
+
+        std::for_each(m_bullets.begin(), m_bullets.end(), [](const std::unique_ptr<GameObject>& bullet)
             {
-                inUse = false;
-                return;
-            }
-        }
+                if (bullet->GetComponent<BulletComponent>()->IsActive())
+                    bullet->Update();
+            });
+    }
+
+    void BulletPool::Render() const
+    {
+        std::for_each(m_bullets.begin(), m_bullets.end(), [](const std::unique_ptr<GameObject>& bullet)
+            {
+                if (bullet->GetComponent<BulletComponent>()->IsActive())
+                    bullet->Render();
+            });
     }
 }

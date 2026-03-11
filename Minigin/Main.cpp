@@ -15,7 +15,6 @@
 #include "Components/FormationComponent.h"
 #include "Components/EnemyEntryComponent.h"
 #include "Components/EntryQueueComponent.h"
-#include "Components/OrbitComponent.h"
 #include "Components/ScrollBackgroundComponent.h"
 #include "Components/ThrashCacheComponent.h"
 #include "Input/InputManager.h"
@@ -24,11 +23,16 @@
 #include "Input/Controller.h"
 #include "EnemyFactory.h"
 #include "Scene.h"
-#include "BulletPool.h"
 
 #include <filesystem>
 namespace fs = std::filesystem;
 
+enum class PlayerInputType
+{
+	Keyboard,
+	Thumbstick,
+	DPad
+};
 void CreateBackground(dae::Scene& scene, const std::string& fileName)
 {
 	auto background = std::make_unique<dae::GameObject>();
@@ -226,46 +230,55 @@ void CreateEnemies(dae::Scene& scene)
 	scene.Add(std::move(formationMover));
 }
 
-void CreatePlayer(dae::Scene& scene)
+void CreatePlayer(dae::Scene& scene, PlayerInputType inputType, float movementSpeed, bool bindInput)
 {
 	auto& input = dae::InputManager::GetInstance();
-
-	auto player1 = std::make_unique<dae::GameObject>();
-	player1->AddComponent<dae::TextureComponent>("Player.png");
-	player1->GetComponent<dae::TransformComponent>()
+	auto player = std::make_unique<dae::GameObject>();
+	player->AddComponent<dae::TextureComponent>("Player.png");
+	player->AddComponent<dae::ShootComponent>(800.f);
+	player->GetComponent<dae::TransformComponent>()
 		->SetLocalPosition({ 300.f, 700.f, 0.f });
-	player1->GetComponent<dae::TransformComponent>()
+	player->GetComponent<dae::TransformComponent>()
 		->SetScale({ 3.f, 3.f, 0.f });
 
-	input.AddController(0);
-	input.BindCommand(
-		{ 0, dae::Thumbstick::DPad },
-		std::make_unique<MoveCommand>(player1.get(), 100.f)
-	);
+	if (bindInput)
+	{
+		uint32_t controllerp1 = UINT32_MAX;
+		if (inputType != PlayerInputType::Keyboard)
+			controllerp1 = input.AddController();
 
-	scene.Add(std::move(player1));
+		switch (inputType)
+		{
+		case PlayerInputType::Keyboard:
+			input.BindCommand(
+				{ SDL_SCANCODE_W, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D },
+				std::make_unique<MoveCommand>(player.get(), movementSpeed));
+			input.BindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down,
+				std::make_unique<ShootCommand>(player.get()));
+			break;
+		case PlayerInputType::Thumbstick:
+			input.BindCommand(controllerp1, dae::Thumbstick::Left,
+				std::make_unique<MoveCommand>(player.get(), movementSpeed));
+			input.BindCommand(controllerp1, dae::ControllerButton::ButtonA, dae::KeyState::Down,
+				std::make_unique<ShootCommand>(player.get()));
+			break;
+		case PlayerInputType::DPad:
+			input.BindCommand(controllerp1, dae::Thumbstick::DPad,
+				std::make_unique<MoveCommand>(player.get(), movementSpeed));
+			input.BindCommand(controllerp1, dae::ControllerButton::ButtonA, dae::KeyState::Down,
+				std::make_unique<ShootCommand>(player.get()));
+			break;
+		default:
+			input.BindCommand(
+				{ SDL_SCANCODE_W, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D },
+				std::make_unique<MoveCommand>(player.get(), movementSpeed));
+			input.BindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down,
+				std::make_unique<ShootCommand>(player.get()));
+			break;
+		}
+	}
 
-	auto player2 = std::make_unique<dae::GameObject>();
-	player2->AddComponent<dae::TextureComponent>("Player.png");
-	player2->AddComponent<dae::ShootComponent>(800.f);
-	player2->GetComponent<dae::TransformComponent>()
-		->SetLocalPosition({ 300.f, 800.f, 0.f });
-	player2->GetComponent<dae::TransformComponent>()
-		->SetScale({ 3.f, 3.f, 0.f });
-
-	input.BindCommand(
-		{ 0, dae::Thumbstick::Left },
-		std::make_unique<MoveCommand>(player2.get(), 100.f)
-	);
-
-	input.BindCommand(
-		{ 0, Controller::Button::ButtonB },
-		dae::KeyState::Down,
-		std::make_unique<ShootCommand>(player2.get())
-	);
-
-	scene.Add(std::move(player2));
-
+	scene.Add(std::move(player));
 }
 
 void CreateThrashCache(dae::Scene& scene)
@@ -274,17 +287,48 @@ void CreateThrashCache(dae::Scene& scene)
 	go->AddComponent<dae::ThrashCacheComponent>();
 	scene.Add(std::move(go));
 }
-static void load()
+
+void CreateMenuScene()
 {
-	auto& scene = dae::SceneManager::GetInstance().CreateScene("Game");
+	auto& scene = dae::SceneManager::GetInstance().CreateScene("Menu");
 	CreateBackground(scene, "Background_Galaga.png");
-	dae::BulletPool::GetInstance().Initialize(&scene, 15);
+}
+
+void CreateSinglePlayerScene()
+{
+	auto& scene = dae::SceneManager::GetInstance().CreateScene("SinglePlayer");
+	CreateBackground(scene, "Background_Galaga.png");
 	CreateHUD(scene);
 	CreateEnemies(scene);
-	CreatePlayer(scene);
-	//CreateThrashCache(scene);
+	CreatePlayer(scene, PlayerInputType::Thumbstick, 100.f, false);
+}
 
-	dae::SceneManager::GetInstance().SetActiveScene("Game");
+void CreateCoOpScene()
+{
+	auto& scene = dae::SceneManager::GetInstance().CreateScene("MultiPlayer");
+	CreateBackground(scene, "Background_Galaga.png");
+	CreateHUD(scene);
+	CreateEnemies(scene);
+	CreatePlayer(scene, PlayerInputType::DPad, 200.f, true);
+	CreatePlayer(scene, PlayerInputType::Keyboard, 100.f, true);
+}
+
+void CreateVersusScene()
+{
+	auto& scene = dae::SceneManager::GetInstance().CreateScene("Versus");
+	CreateBackground(scene, "Background_Galaga.png");
+	CreateHUD(scene);
+	CreateEnemies(scene);
+	CreatePlayer(scene, PlayerInputType::Thumbstick, 100.f, false);
+}
+
+static void load()
+{
+	CreateMenuScene();
+	CreateSinglePlayerScene();
+	CreateCoOpScene();
+	CreateVersusScene();
+	dae::SceneManager::GetInstance().SetActiveScene("MultiPlayer");
 }
 
 int main(int, char*[]) {

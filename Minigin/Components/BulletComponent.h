@@ -11,6 +11,8 @@ namespace dae
         BulletComponent(GameObject* owner);
         void Activate(float x, float y, float dirX, float dirY, float speed);
         void Deactivate();
+		bool IsActive() const { return m_active; }
+		void SetActive(bool active) { m_active = active; }
         void Update() override;
 
     private:

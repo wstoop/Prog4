@@ -1,45 +1,79 @@
 #pragma once
 #include "Singleton.h"
-#include "Controller.h"
 #include "../Commands/Command.h"
 #include <memory>
-#include <glm/glm.hpp>
-#include <map>
+#include <cstdint>
+
 namespace dae
 {
-	enum class KeyState
-	{
-		Down,
-		Up,
-		Pressed
-	};
+	enum class KeyState { Down, Up, Pressed };
 	enum class Thumbstick { Left, Right, DPad };
+
+	enum class ControllerButton : uint16_t
+	{
+		DpadUp = 0x0001,
+		DpadDown = 0x0002,
+		DpadLeft = 0x0004,
+		DpadRight = 0x0008,
+		Start = 0x0010,
+		Back = 0x0020,
+		LeftThumb = 0x0040,
+		RightThumb = 0x0080,
+		LeftShoulder = 0x0100,
+		RightShoulder = 0x0200,
+		ButtonA = 0x1000,
+		ButtonB = 0x2000,
+		ButtonX = 0x4000,
+		ButtonY = 0x8000,
+	};
+
+	// Use int so this header stays SDL-free. Pass SDL_SCANCODE_* values directly —
+	// they implicitly convert to int.
+	struct KeyboardAxis
+	{
+		int scancodeUp;
+		int scancodeDown;
+		int scancodeLeft;
+		int scancodeRight;
+
+		bool operator<(const KeyboardAxis& o) const
+		{
+			if (scancodeUp != o.scancodeUp)    return scancodeUp < o.scancodeUp;
+			if (scancodeDown != o.scancodeDown)  return scancodeDown < o.scancodeDown;
+			if (scancodeLeft != o.scancodeLeft)  return scancodeLeft < o.scancodeLeft;
+			return scancodeRight < o.scancodeRight;
+		}
+	};
+
 	class InputManager final : public Singleton<InputManager>
 	{
 	public:
-		using ControllerKey = std::pair<uint32_t, Controller::Button>;
-		using KeyboardKey = std::pair<uint32_t, KeyState>;
-		using ThumbstickKey = std::pair<uint32_t, Thumbstick>;
+		InputManager();
+		~InputManager();
 
-		void AddController(uint32_t controllerIndex);
+		uint32_t AddController();
 
-		void BindCommand(ControllerKey controllerKey, KeyState keyState, std::unique_ptr<Command> command);
-		void BindCommand(KeyboardKey keyboardKey, std::unique_ptr<Command> command);
-		void BindCommand(ThumbstickKey thumbstickKey, std::unique_ptr<AxisCommand> command);
+		// Controller buttons
+		void BindCommand(uint32_t controllerIndex, ControllerButton button, KeyState state,
+			std::unique_ptr<Command> command);
+		void UnbindCommand(uint32_t controllerIndex, ControllerButton button, KeyState state);
 
-		void UnbindCommand(ThumbstickKey thumbstickKey);
-		void UnbindCommand(ControllerKey controllerKey, KeyState keyState);
-		void UnbindCommand(KeyboardKey keyboardKey);
+		// Thumbsticks and DPad
+		void BindCommand(uint32_t controllerIndex, Thumbstick thumbstick,
+			std::unique_ptr<AxisCommand> command);
+		void UnbindCommand(uint32_t controllerIndex, Thumbstick thumbstick);
+
+		// Keyboard single key
+		void BindCommand(int scancode, KeyState state, std::unique_ptr<Command> command);
+		void UnbindCommand(int scancode, KeyState state);
+
+		// Keyboard axis (WASD / arrow keys)
+		void BindCommand(KeyboardAxis axis, std::unique_ptr<AxisCommand> command);
+		void UnbindCommand(KeyboardAxis axis);
 
 		bool ProcessInput();
 	private:
-		void ScanControllers();
-
-		std::map<uint32_t, std::unique_ptr<Controller>> m_controllers;
-
-		std::map<std::pair<ControllerKey, KeyState>, std::unique_ptr<Command>> m_controllerCommands;
-		std::map<KeyboardKey, std::unique_ptr<Command>> m_keyboardCommands;
-		std::map<ThumbstickKey, std::unique_ptr<AxisCommand>> m_thumbstickCommands;
+		struct Impl;
+		std::unique_ptr<Impl> m_impl;
 	};
-
 }
