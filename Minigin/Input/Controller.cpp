@@ -4,12 +4,12 @@
 
 class Controller::ControllerImpl
 {
-    SDL_GameController* m_pGamepad;
     uint32_t m_controllerIndex;
     uint16_t m_previousButtons{ 0 };
     uint16_t m_currentButtons{ 0 };
     uint16_t m_buttonsPressedThisFrame{ 0 };
     uint16_t m_buttonsReleasedThisFrame{ 0 };
+    SDL_GameController* m_pGamepad;
 
     static constexpr float k_deadZone = 0.2f;
 
