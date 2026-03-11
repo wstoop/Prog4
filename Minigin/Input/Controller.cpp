@@ -4,7 +4,6 @@
 
 class Controller::ControllerImpl
 {
-    uint32_t m_controllerIndex;
     uint16_t m_previousButtons{ 0 };
     uint16_t m_currentButtons{ 0 };
     uint16_t m_buttonsPressedThisFrame{ 0 };
@@ -60,7 +59,7 @@ class Controller::ControllerImpl
 
 public:
     explicit ControllerImpl(uint32_t index)
-        : m_controllerIndex(index), m_pGamepad(nullptr)
+        : m_pGamepad(nullptr)
     {
         if (SDL_IsGameController(static_cast<int>(index)))
             m_pGamepad = SDL_GameControllerOpen(static_cast<int>(index));
