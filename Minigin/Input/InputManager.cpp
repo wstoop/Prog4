@@ -103,6 +103,8 @@ namespace dae
 
                 if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP)
                 {
+                    if (e.key.repeat) continue;
+
                     KeyState state = (e.type == SDL_EVENT_KEY_DOWN) ? KeyState::Down : KeyState::Up;
                     KeyboardBindKey key{ static_cast<int>(e.key.scancode), state };
                     auto it = m_keyboardCommands.find(key);

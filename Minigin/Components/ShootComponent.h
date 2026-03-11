@@ -4,7 +4,7 @@
 namespace dae
 {
     class TransformComponent;
-
+	class TextureComponent;
     class ShootComponent final : public Component
     {
     public:
@@ -14,5 +14,6 @@ namespace dae
     private:
         float m_speed;
         TransformComponent* m_transform;
+        TextureComponent* m_sprite;
     };
 }
