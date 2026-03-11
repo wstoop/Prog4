@@ -4,51 +4,51 @@
 
 class Controller::ControllerImpl
 {
-    SDL_Gamepad* m_pGamepad;
-    uint32_t      m_controllerIndex;
-    uint16_t      m_previousButtons{ 0 };
-    uint16_t      m_currentButtons{ 0 };
-    uint16_t      m_buttonsPressedThisFrame{ 0 };
-    uint16_t      m_buttonsReleasedThisFrame{ 0 };
+    SDL_GameController* m_pGamepad;
+    uint32_t m_controllerIndex;
+    uint16_t m_previousButtons{ 0 };
+    uint16_t m_currentButtons{ 0 };
+    uint16_t m_buttonsPressedThisFrame{ 0 };
+    uint16_t m_buttonsReleasedThisFrame{ 0 };
 
     static constexpr float k_deadZone = 0.2f;
 
-    static bool SDLButtonPressed(SDL_Gamepad* pad, SDL_GamepadButton sdlBtn)
+    static bool SDLButtonPressed(SDL_GameController* pad, SDL_GameControllerButton btn)
     {
-        return SDL_GetGamepadButton(pad, sdlBtn) != 0;
+        return SDL_GameControllerGetButton(pad, btn) != 0;
     }
 
     uint16_t SampleButtons() const
     {
         if (!m_pGamepad) return 0;
         uint16_t state = 0;
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_DPAD_UP))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_DPAD_UP))
             state |= static_cast<uint16_t>(Controller::Button::DpadUp);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
             state |= static_cast<uint16_t>(Controller::Button::DpadDown);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
             state |= static_cast<uint16_t>(Controller::Button::DpadLeft);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
             state |= static_cast<uint16_t>(Controller::Button::DpadRight);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_START))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_START))
             state |= static_cast<uint16_t>(Controller::Button::Start);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_BACK))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_BACK))
             state |= static_cast<uint16_t>(Controller::Button::Back);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_LEFT_STICK))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_LEFTSTICK))
             state |= static_cast<uint16_t>(Controller::Button::LeftThumb);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_RIGHTSTICK))
             state |= static_cast<uint16_t>(Controller::Button::RightThumb);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_LEFTSHOULDER))
             state |= static_cast<uint16_t>(Controller::Button::LeftShoulder);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER))
             state |= static_cast<uint16_t>(Controller::Button::RightShoulder);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_SOUTH))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_A))
             state |= static_cast<uint16_t>(Controller::Button::ButtonA);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_EAST))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_B))
             state |= static_cast<uint16_t>(Controller::Button::ButtonB);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_WEST))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_X))
             state |= static_cast<uint16_t>(Controller::Button::ButtonX);
-        if (SDLButtonPressed(m_pGamepad, SDL_GAMEPAD_BUTTON_NORTH))
+        if (SDLButtonPressed(m_pGamepad, SDL_CONTROLLER_BUTTON_Y))
             state |= static_cast<uint16_t>(Controller::Button::ButtonY);
         return state;
     }
@@ -60,21 +60,16 @@ class Controller::ControllerImpl
 
 public:
     explicit ControllerImpl(uint32_t index)
-        : m_controllerIndex(index)
+        : m_controllerIndex(index), m_pGamepad(nullptr)
     {
-        int count = 0;
-        SDL_JoystickID* joysticks = SDL_GetGamepads(&count);
-        if (joysticks && static_cast<int>(index) < count)
-            m_pGamepad = SDL_OpenGamepad(joysticks[index]);
-        else
-            m_pGamepad = nullptr;
-        SDL_free(joysticks);
+        if (SDL_IsGameController(static_cast<int>(index)))
+            m_pGamepad = SDL_GameControllerOpen(static_cast<int>(index));
     }
 
     ~ControllerImpl()
     {
         if (m_pGamepad)
-            SDL_CloseGamepad(m_pGamepad);
+            SDL_GameControllerClose(m_pGamepad);
     }
 
     void Update()
@@ -89,7 +84,7 @@ public:
 
     bool IsConnected() const
     {
-        return m_pGamepad != nullptr && SDL_GamepadConnected(m_pGamepad);
+        return m_pGamepad != nullptr && SDL_GameControllerGetAttached(m_pGamepad);
     }
 
     bool IsDownThisFrame(Controller::Button button) const
@@ -110,16 +105,16 @@ public:
     glm::vec2 GetLeftThumbstick() const
     {
         if (!m_pGamepad) return { 0.f, 0.f };
-        float x = SDL_GetGamepadAxis(m_pGamepad, SDL_GAMEPAD_AXIS_LEFTX) / 32767.f;
-        float y = SDL_GetGamepadAxis(m_pGamepad, SDL_GAMEPAD_AXIS_LEFTY) / 32767.f;
+        float x = SDL_GameControllerGetAxis(m_pGamepad, SDL_CONTROLLER_AXIS_LEFTX) / 32767.f;
+        float y = SDL_GameControllerGetAxis(m_pGamepad, SDL_CONTROLLER_AXIS_LEFTY) / 32767.f;
         return { ApplyDeadzone(x), ApplyDeadzone(-y) };
     }
 
     glm::vec2 GetRightThumbstick() const
     {
         if (!m_pGamepad) return { 0.f, 0.f };
-        float x = SDL_GetGamepadAxis(m_pGamepad, SDL_GAMEPAD_AXIS_RIGHTX) / 32767.f;
-        float y = SDL_GetGamepadAxis(m_pGamepad, SDL_GAMEPAD_AXIS_RIGHTY) / 32767.f;
+        float x = SDL_GameControllerGetAxis(m_pGamepad, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.f;
+        float y = SDL_GameControllerGetAxis(m_pGamepad, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.f;
         return { ApplyDeadzone(x), ApplyDeadzone(-y) };
     }
 
@@ -220,46 +215,39 @@ public:
 #endif
 
 Controller::Controller(uint32_t controllerIndex)
-	: m_impl(std::make_unique<ControllerImpl>(controllerIndex))
-{
+    : m_impl(std::make_unique<ControllerImpl>(controllerIndex)) {
 }
 
 Controller::~Controller() = default;
+
 void Controller::Update()
-{
-	m_impl->Update();
+{ 
+    m_impl->Update();
 }
-
-bool Controller::IsDownThisFrame(Button button) const
-{
-	return m_impl->IsDownThisFrame(button);
-}
-
-bool Controller::IsUpThisFrame(Button button) const
-{
-	return m_impl->IsUpThisFrame(button);
-}
-
-bool Controller::IsPressed(Button button) const
-{
-	return m_impl->IsPressed(button);
-}
-
-glm::vec2 Controller::GetLeftThumbstick() const
-{
-	return m_impl->GetLeftThumbstick();
-}
-
-glm::vec2 Controller::GetRightThumbstick() const
-{
-	return m_impl->GetRightThumbstick();
-}
-
 bool Controller::IsConnected() const
 {
     return m_impl->IsConnected();
 }
-
+bool Controller::IsDownThisFrame(Button b) const
+{
+    return m_impl->IsDownThisFrame(b);
+}
+bool Controller::IsUpThisFrame(Button b) const
+{
+    return m_impl->IsUpThisFrame(b);
+}
+bool Controller::IsPressed(Button b) const
+{
+    return m_impl->IsPressed(b);
+}
+glm::vec2 Controller::GetLeftThumbstick() const
+{
+    return m_impl->GetLeftThumbstick();
+}
+glm::vec2 Controller::GetRightThumbstick() const
+{
+    return m_impl->GetRightThumbstick();
+}
 glm::vec2 Controller::GetDPad() const
 {
     return m_impl->GetDPad();

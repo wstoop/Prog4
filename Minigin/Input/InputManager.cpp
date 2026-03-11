@@ -1,5 +1,11 @@
+#ifdef __EMSCRIPTEN__
+#include <SDL.h>
+#include <backends/imgui_impl_sdl2.h>
+#else
 #include <SDL3/SDL.h>
 #include <backends/imgui_impl_sdl3.h>
+#endif
+
 #include "InputManager.h"
 #include "Controller.h"
 #include <map>
@@ -36,7 +42,7 @@ namespace dae
 
     struct KeyboardBindKey
     {
-        int      scancode; // SDL_Scancode stored as int to match header
+        int      scancode;
         KeyState state;
 
         bool operator<(const KeyboardBindKey& o) const
@@ -98,6 +104,20 @@ namespace dae
             SDL_Event e;
             while (SDL_PollEvent(&e))
             {
+#ifdef __EMSCRIPTEN__
+                if (e.type == SDL_QUIT)
+                    return false;
+
+                if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
+                {
+                    KeyState state = (e.type == SDL_KEYDOWN) ? KeyState::Down : KeyState::Up;
+                    KeyboardBindKey key{ static_cast<int>(e.key.keysym.scancode), state };
+                    auto it = m_keyboardCommands.find(key);
+                    if (it != m_keyboardCommands.end())
+                        it->second->Execute();
+                }
+                ImGui_ImplSDL2_ProcessEvent(&e);
+#else
                 if (e.type == SDL_EVENT_QUIT)
                     return false;
 
@@ -109,15 +129,15 @@ namespace dae
                     if (it != m_keyboardCommands.end())
                         it->second->Execute();
                 }
-
                 ImGui_ImplSDL3_ProcessEvent(&e);
+#endif
             }
 
             // Keyboard held (Pressed state)
             const bool* kb = SDL_GetKeyboardState(nullptr);
             for (const auto& [key, command] : m_keyboardCommands)
             {
-                if (key.state == KeyState::Pressed && kb[static_cast<SDL_Scancode>(key.scancode)])
+                if (key.state == KeyState::Pressed && kb[key.scancode])
                     command->Execute();
             }
 
@@ -125,10 +145,10 @@ namespace dae
             for (const auto& [axis, command] : m_keyboardAxisCommands)
             {
                 glm::vec2 dir{ 0.f, 0.f };
-                if (kb[static_cast<SDL_Scancode>(axis.scancodeRight)]) dir.x += 1.f;
-                if (kb[static_cast<SDL_Scancode>(axis.scancodeLeft)])  dir.x -= 1.f;
-                if (kb[static_cast<SDL_Scancode>(axis.scancodeUp)])    dir.y += 1.f;
-                if (kb[static_cast<SDL_Scancode>(axis.scancodeDown)])  dir.y -= 1.f;
+                if (kb[axis.scancodeRight]) dir.x += 1.f;
+                if (kb[axis.scancodeLeft])  dir.x -= 1.f;
+                if (kb[axis.scancodeUp])    dir.y += 1.f;
+                if (kb[axis.scancodeDown])  dir.y -= 1.f;
                 command->Execute(dir);
             }
 
