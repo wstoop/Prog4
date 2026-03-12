@@ -101,6 +101,11 @@ namespace dae
                 if (e.type == SDL_EVENT_QUIT)
                     return false;
 
+#ifdef __EMSCRIPTEN__
+                if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED)
+                    ScanControllers();
+#endif
+
                 if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP)
                 {
                     if (e.key.repeat) continue;
