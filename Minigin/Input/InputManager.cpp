@@ -72,7 +72,33 @@ namespace dae
 
         bool ProcessInput()
         {
-            ScanControllers();
+            // SDL event pump
+            SDL_Event e;
+            while (SDL_PollEvent(&e))
+            {
+                if (e.type == SDL_EVENT_QUIT)
+                    return false;
+
+#ifdef __EMSCRIPTEN__
+                if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED)
+                    ScanControllers();
+#endif
+
+                if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP)
+                {
+                    if (e.key.repeat) continue;
+                    KeyState state = (e.type == SDL_EVENT_KEY_DOWN) ? KeyState::Down : KeyState::Up;
+                    KeyboardBindKey key{ static_cast<int>(e.key.scancode), state };
+                    auto it = m_keyboardCommands.find(key);
+                    if (it != m_keyboardCommands.end())
+                        it->second->Execute();
+                }
+
+                ImGui_ImplSDL3_ProcessEvent(&e);
+            }
+
+            for (auto& [index, controller] : m_controllers)
+                controller->Update();
 
             // Controller button commands
             for (const auto& [key, command] : m_controllerCommands)
@@ -89,34 +115,6 @@ namespace dae
                 case KeyState::Up:      if (ctrl.IsUpThisFrame(btn))   command->Execute(); break;
                 case KeyState::Pressed: if (ctrl.IsPressed(btn))       command->Execute(); break;
                 }
-            }
-
-            // SDL event pump
-            SDL_Event e;
-            while (SDL_PollEvent(&e))
-            {
-                if (e.type == SDL_EVENT_QUIT)
-                    return false;
-
-#ifdef __EMSCRIPTEN__
-                if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED)
-                    ScanControllers();
-#endif
-                for (auto& [index, controller] : m_controllers)
-                    controller->Update();
-
-                if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP)
-                {
-                    if (e.key.repeat) continue;
-
-                    KeyState state = (e.type == SDL_EVENT_KEY_DOWN) ? KeyState::Down : KeyState::Up;
-                    KeyboardBindKey key{ static_cast<int>(e.key.scancode), state };
-                    auto it = m_keyboardCommands.find(key);
-                    if (it != m_keyboardCommands.end())
-                        it->second->Execute();
-                }
-
-                ImGui_ImplSDL3_ProcessEvent(&e);
             }
 
             // Keyboard held (Pressed state)
