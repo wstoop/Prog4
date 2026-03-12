@@ -1,10 +1,9 @@
 #include "Controller.h"
-#ifdef __EMSCRIPTEN__
 #include <SDL3/SDL.h>
-
 class Controller::ControllerImpl
 {
     SDL_Gamepad* m_pGamepad;
+	uint32_t      m_targetIndex;
     uint16_t      m_previousButtons{ 0 };
     uint16_t      m_currentButtons{ 0 };
     uint16_t      m_buttonsPressedThisFrame{ 0 };
@@ -59,7 +58,7 @@ class Controller::ControllerImpl
 
 public:
     explicit ControllerImpl(uint32_t index)
-        : m_pGamepad(nullptr)
+        : m_pGamepad(nullptr), m_targetIndex(index)
     {
         int count = 0;
         SDL_JoystickID* joysticks = SDL_GetGamepads(&count);
@@ -76,6 +75,30 @@ public:
 
     void Update()
     {
+        SDL_Event e;
+        while (SDL_PollEvent(&e))
+        {
+            if (e.type == SDL_EVENT_GAMEPAD_ADDED)
+            {
+                int count = 0;
+                SDL_JoystickID* joysticks = SDL_GetGamepads(&count);
+                if (joysticks && static_cast<int>(m_targetIndex) < count)
+                {
+                    if (!m_pGamepad)
+                        m_pGamepad = SDL_OpenGamepad(joysticks[m_targetIndex]);
+                }
+                SDL_free(joysticks);
+            }
+            else if (e.type == SDL_EVENT_GAMEPAD_REMOVED)
+            {
+                if (m_pGamepad && !SDL_GamepadConnected(m_pGamepad))
+                {
+                    SDL_CloseGamepad(m_pGamepad);
+                    m_pGamepad = nullptr;
+                }
+            }
+        }
+
         m_previousButtons = m_currentButtons;
         m_currentButtons = SampleButtons();
 
@@ -130,87 +153,6 @@ public:
         return dir;
     }
 };
-
-#else
-#include <windows.h>
-#include <XInput.h>
-#include <glm/glm.hpp>
-
-class Controller::ControllerImpl
-{
-    XINPUT_STATE m_previousState{};
-    XINPUT_STATE m_currentState{};
-    uint32_t     m_controllerIndex;
-    uint16_t     m_buttonsPressedThisFrame{ 0 };
-    uint16_t     m_buttonsReleasedThisFrame{ 0 };
-
-    static constexpr float k_deadZone = 32767.f * 0.2f;
-
-    static float ApplyDeadzone(float v)
-    {
-        return (v > k_deadZone || v < -k_deadZone) ? v / 32767.f : 0.f;
-    }
-
-public:
-    explicit ControllerImpl(uint32_t index) : m_controllerIndex(index) {}
-
-    void Update()
-    {
-        CopyMemory(&m_previousState, &m_currentState, sizeof(XINPUT_STATE));
-        ZeroMemory(&m_currentState, sizeof(XINPUT_STATE));
-        if (XInputGetState(m_controllerIndex, &m_currentState) != ERROR_SUCCESS)
-            return;
-
-        uint16_t changes = m_currentState.Gamepad.wButtons ^ m_previousState.Gamepad.wButtons;
-        m_buttonsPressedThisFrame = changes & m_currentState.Gamepad.wButtons;
-        m_buttonsReleasedThisFrame = changes & (~m_currentState.Gamepad.wButtons);
-    }
-
-    bool IsConnected() const
-    {
-        XINPUT_STATE state{};
-        return XInputGetState(m_controllerIndex, &state) == ERROR_SUCCESS;
-    }
-
-    bool IsDownThisFrame(Controller::Button button) const
-    {
-        return (m_buttonsPressedThisFrame & static_cast<uint16_t>(button)) != 0;
-    }
-
-    bool IsUpThisFrame(Controller::Button button) const
-    {
-        return (m_buttonsReleasedThisFrame & static_cast<uint16_t>(button)) != 0;
-    }
-
-    bool IsPressed(Controller::Button button) const
-    {
-        return (m_currentState.Gamepad.wButtons & static_cast<uint16_t>(button)) != 0;
-    }
-
-    glm::vec2 GetLeftThumbstick() const
-    {
-        return { ApplyDeadzone(m_currentState.Gamepad.sThumbLX),
-                 ApplyDeadzone(m_currentState.Gamepad.sThumbLY) };
-    }
-
-    glm::vec2 GetRightThumbstick() const
-    {
-        return { ApplyDeadzone(m_currentState.Gamepad.sThumbRX),
-                 ApplyDeadzone(m_currentState.Gamepad.sThumbRY) };
-    }
-
-    glm::vec2 GetDPad() const
-    {
-        glm::vec2 dir{ 0.f, 0.f };
-        if (IsPressed(Controller::Button::DpadRight)) dir.x += 1.f;
-        if (IsPressed(Controller::Button::DpadLeft)) dir.x -= 1.f;
-        if (IsPressed(Controller::Button::DpadUp)) dir.y += 1.f;
-        if (IsPressed(Controller::Button::DpadDown)) dir.y -= 1.f;
-        return dir;
-    }
-};
-
-#endif
 
 Controller::Controller(uint32_t controllerIndex)
     : m_impl(std::make_unique<ControllerImpl>(controllerIndex)) {
