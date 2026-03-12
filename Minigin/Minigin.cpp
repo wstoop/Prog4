@@ -63,9 +63,10 @@ dae::Minigin::Minigin(const std::filesystem::path& dataPath)
 	, m_input(InputManager::GetInstance())
 	, m_timeManager(TimeManager::GetInstance())
 {
+
 	PrintSDLVersion();
 	
-	if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
+	if (!SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
 	{
 		SDL_Log("Renderer error: %s", SDL_GetError());
 		throw std::runtime_error(std::string("SDL_Init Error: ") + SDL_GetError());
@@ -111,10 +112,10 @@ void dae::Minigin::Run(const std::function<void()>& load)
 
 void dae::Minigin::RunOneFrame()
 {
-	m_quit = !m_input.ProcessInput();
-
 	const auto current_time = std::chrono::high_resolution_clock::now();
 	const float delta_time = std::chrono::duration<float>(current_time - m_lastTime).count();
+	m_quit = !m_input.ProcessInput();
+
 	m_timeManager.SetDeltaTime(delta_time);
 	m_lastTime = current_time;
 	m_lag += delta_time;
