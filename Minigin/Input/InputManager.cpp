@@ -72,7 +72,6 @@ namespace dae
 
         bool ProcessInput()
         {
-            // SDL event pump
             SDL_Event e;
             while (SDL_PollEvent(&e))
             {
@@ -159,7 +158,12 @@ namespace dae
 
     // ---- Public interface ----
 
-    InputManager::InputManager() : m_impl(std::make_unique<Impl>()) {}
+    InputManager::InputManager() : m_impl(std::make_unique<Impl>())
+    {
+#ifdef __EMSCRIPTEN__
+        m_impl->ScanControllers();
+#endif
+    }
     InputManager::~InputManager() = default;
 
     uint32_t InputManager::AddController()
