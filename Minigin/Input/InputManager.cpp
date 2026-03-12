@@ -74,9 +74,6 @@ namespace dae
         {
             ScanControllers();
 
-            for (auto& [index, controller] : m_controllers)
-                controller->Update();
-
             // Controller button commands
             for (const auto& [key, command] : m_controllerCommands)
             {
@@ -105,6 +102,8 @@ namespace dae
                 if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED)
                     ScanControllers();
 #endif
+                for (auto& [index, controller] : m_controllers)
+                    controller->Update();
 
                 if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP)
                 {
