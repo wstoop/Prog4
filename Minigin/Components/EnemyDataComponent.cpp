@@ -9,7 +9,7 @@ void dae::EnemyDataComponent::HandleEvent(const Event* pEvent)
 {
     if (m_hit) return;
 
-    const auto* e = static_cast<const DataEvent<OverlapData>*>(pEvent);
+    const auto* e = static_cast<const DataEvent<OverlapEvent>*>(pEvent);
     if (e->data.self != GetOwner()) return;
     if (e->data.other->tag != "Bullet") return;
 

@@ -160,8 +160,23 @@ namespace dae
 
     uint32_t InputManager::AddController()
     {
-        uint32_t index = m_impl->m_nextControllerIndex++;
-        m_impl->m_controllers.emplace(index, std::make_unique<Controller>(index));
+        uint32_t index = m_impl->m_nextControllerIndex;
+
+        // Only create if it doesn't exist
+        if (m_impl->m_controllers.find(index) == m_impl->m_controllers.end())
+        {
+            auto pController = std::make_unique<Controller>(index);
+            // Ensure the controller is actually connected before we consider this index "taken"
+            if (pController->IsConnected())
+            {
+                m_impl->m_controllers.emplace(index, std::move(pController));
+                m_impl->m_nextControllerIndex++;
+                return index;
+            }
+        }
+
+        // If index 0 wasn't connected, we might need a different strategy 
+        // or simply return the index and let the Controller handle the null-check
         return index;
     }
 

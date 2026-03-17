@@ -1,5 +1,6 @@
 #include "HitboxComponent.h"
 #include "../GameObject.h"
+#include "../GameEvents.h"
 #include "TransformComponent.h"
 
 namespace dae
@@ -60,9 +61,9 @@ namespace dae
             if (!Overlaps(other)) continue;
 
             EventManager::GetInstance().SendEvent(
-                std::make_unique<DataEvent<OverlapData>>(
+                std::make_unique<DataEvent<OverlapEvent>>(
                     ACTOR_OVERLAPPED,
-                    OverlapData{ GetOwner(), other->GetOwner() }
+                    OverlapEvent{ GetOwner(), other->GetOwner() }
                 )
             );
         }

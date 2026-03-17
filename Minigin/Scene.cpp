@@ -37,8 +37,8 @@ void Scene::LateUpdate()
 		obj->LateUpdate();
 		});
 	EventManager::GetInstance().Update();
-	dae::BulletPool::GetInstance().Update();
-	dae::ExplosionPool::GetInstance().Update();
+	BulletPool::GetInstance().Update();
+	ExplosionPool::GetInstance().Update();
 	PurgeDestroyedObjects();
 }
 
@@ -55,8 +55,8 @@ void Scene::Render() const
 		obj->Render();
 		});
 
-	dae::BulletPool::GetInstance().Render();
-	dae::ExplosionPool::GetInstance().Render();
+	BulletPool::GetInstance().Render();
+	ExplosionPool::GetInstance().Render();
 }
 
 void Scene::PurgeDestroyedObjects()

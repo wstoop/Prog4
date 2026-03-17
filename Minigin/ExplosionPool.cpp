@@ -4,56 +4,66 @@
 #include "Components/TransformComponent.h"
 #include <memory>
 #include <algorithm>
-#include <iterator>
 
-namespace dae
+void ExplosionPool::ActivateExplosion(const glm::vec3 & enemyCenter)
 {
+    auto it = std::find_if(m_explosions.begin(), m_explosions.end(), [](const std::unique_ptr<dae::GameObject>& e) {
+        auto* anim = e->GetComponent<dae::AnimationComponent>();
+        return anim && !anim->IsPlaying();
+        });
 
-    void dae::ExplosionPool::ActivateExplosion(const glm::vec3& enemyCenter)
+    dae::GameObject* explosion = (it == m_explosions.end())
+        ? m_explosions.emplace_back(CreateExplosion()).get()
+        : it->get();
+
+    auto* anim = explosion->GetComponent<dae::AnimationComponent>();
+    auto* transform = explosion->GetComponent<dae::TransformComponent>();
+
+    if (anim && transform)
     {
-        auto it = std::find_if(m_explosions.begin(), m_explosions.end(), [](const std::unique_ptr<GameObject>& e) {
-            return !e->GetComponent<AnimationComponent>()->IsPlaying();
-            });
-
-        GameObject* explosion = (it == m_explosions.end()) ? m_explosions.emplace_back(CreateExplosion()).get() : it->get();
-
-        auto* anim = explosion->GetComponent<AnimationComponent>();
         glm::vec3 finalPos{};
-        finalPos.x = enemyCenter.x - (anim->GetSize().x / 10);
-        finalPos.y = enemyCenter.y - (anim->GetSize().y / 2);
-        explosion->GetComponent<TransformComponent>()->SetLocalPosition(finalPos);
+        finalPos.x = enemyCenter.x - (anim->GetSize().x / 10.f);
+        finalPos.y = enemyCenter.y - (anim->GetSize().y / 2.f);
+
+        transform->SetLocalPosition(finalPos);
         anim->Play();
     }
+}
 
-    std::unique_ptr<GameObject> ExplosionPool::CreateExplosion() const
+std::unique_ptr<dae::GameObject> ExplosionPool::CreateExplosion() const
+{
+    auto explosion = std::make_unique<dae::GameObject>();
+
+    explosion->AddComponent<dae::AnimationComponent>("explosion.png", 5, 1, 0.035f, false);
+
+    if (auto* transform = explosion->GetComponent<dae::TransformComponent>())
     {
-        auto explosion = std::make_unique<GameObject>();
-        explosion->AddComponent<AnimationComponent>("explosion.png", 5, 1, 0.03f, false);
-        explosion->GetComponent<TransformComponent>()->SetScale({ 3.f, 3.f, 3.f });
-        return explosion;
+        transform->SetScale({ 3.f, 3.f, 3.f });
     }
 
-    void dae::ExplosionPool::Update()
+    return explosion;
+}
+
+void ExplosionPool::Update()
+{
+    for (auto& explosion : m_explosions)
     {
-        for (auto& explosion : m_explosions)
+        dae::AnimationComponent* anim = explosion->GetComponent<dae::AnimationComponent>();
+        if (anim && anim->IsPlaying())
         {
-            auto anim = explosion->GetComponent<AnimationComponent>();
-            if (anim && anim->IsPlaying())
-            {
-                explosion->Update();
-            }
+            explosion->Update();
         }
     }
+}
 
-    void dae::ExplosionPool::Render() const
+void ExplosionPool::Render() const
+{
+    for (const auto& explosion : m_explosions)
     {
-        for (const auto& explosion : m_explosions)
+        dae::AnimationComponent* anim = explosion->GetComponent<dae::AnimationComponent>();
+        if (anim && anim->IsPlaying())
         {
-            auto anim = explosion->GetComponent<AnimationComponent>();
-            if (anim && anim->IsPlaying())
-            {
-                explosion->Render();
-            }
+            explosion->Render();
         }
     }
 }

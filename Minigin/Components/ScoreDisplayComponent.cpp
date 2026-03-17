@@ -1,6 +1,7 @@
 #include "ScoreDisplayComponent.h"
 #include "TextComponent.h"
 #include "../GameObject.h"
+#include "../Steam/Achievement.h"
 
 struct ScoreEvent
 {
@@ -24,4 +25,6 @@ void dae::ScoreDisplayComponent::HandleEvent(const Event* event)
 
     m_score += scoreEvent->data.points;
     m_text->SetText(std::to_string(m_score));
+    if (m_score >= 500)
+        g_SteamAchievements->SetAchievement("ACH_WIN_ONE_GAME");
 }

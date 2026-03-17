@@ -13,7 +13,10 @@ namespace dae
 
         static void Register(char type, Creator creator);
         static std::unique_ptr<dae::GameObject> Create(char type);
+        static void RegisterDefaults();
+        static bool s_defaultsRegistered;
     private:
         static std::unordered_map<char, Creator> m_Creators;
+        
     };
 }

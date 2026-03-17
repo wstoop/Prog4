@@ -5,14 +5,6 @@
 
 namespace dae
 {
-    constexpr EventId ACTOR_OVERLAPPED = make_sdbm_hash("ActorOverlapped");
-
-    struct OverlapData
-    {
-        GameObject* self;
-        GameObject* other;
-    };
-
     class HitboxComponent final : public Component
     {
     public:
