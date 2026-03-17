@@ -25,6 +25,8 @@ void dae::ScoreDisplayComponent::HandleEvent(const Event* event)
 
     m_score += scoreEvent->data.points;
     m_text->SetText(std::to_string(m_score));
+#if USE_STEAMWORKS
     if (m_score >= 500)
         g_SteamAchievements->SetAchievement("ACH_WIN_ONE_GAME");
+#endif
 }
