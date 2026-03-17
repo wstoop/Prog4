@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <memory>
 #include <vector>
 
@@ -14,6 +15,7 @@ namespace dae
 		void FixedUpdate();
 		void Render() const;
 
+		std::string tag{};
 		bool m_destroy{ false };
 		template<typename T>
 		T* GetComponent() const
@@ -30,7 +32,7 @@ namespace dae
 		}
 		template<typename T, typename... Args>
 		T* AddComponent(Args&&... args)
-		{
+		{ 
 			static_assert(std::is_base_of<Component, T>::value, "T must derive from Component");
 
 			auto component = std::make_unique<T>(this, std::forward<Args>(args)...);

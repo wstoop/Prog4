@@ -17,7 +17,7 @@ public:
 
     void Execute(glm::vec2 axis) override
     {
-    
+        if (GetGameObject()->m_destroy) return;
         auto d = dae::TimeManager::GetInstance().GetDeltaTime();
         auto pos = m_transform->GetLocalPosition();
         pos.x += axis.x * m_speed * d;

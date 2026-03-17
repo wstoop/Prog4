@@ -3,6 +3,7 @@
 #include "Components/BulletComponent.h"
 #include "Components/TextureComponent.h"
 #include "Components/TransformComponent.h"
+#include "Components/HitboxComponent.h"
 #include <memory>
 #include <algorithm>
 #include <iterator>
@@ -12,8 +13,10 @@ namespace dae
     std::unique_ptr<GameObject> BulletPool::CreateBullet() const
     {
         auto bullet = std::make_unique<GameObject>();
+        bullet->tag = "Bullet";
         bullet->AddComponent<BulletComponent>();
         bullet->AddComponent<TextureComponent>("bullet.png");
+		bullet->AddComponent<HitboxComponent>(3.f * 3, 8.f * 3);
         bullet->GetComponent<TransformComponent>()->SetScale({ 3.f, 3.f, 3.f });
         bullet->GetComponent<BulletComponent>()->SetActive(false);
         return bullet;

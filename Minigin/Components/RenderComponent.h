@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <SDL3/SDL.h>
+#include <glm/glm.hpp>
 #include "Component.h"
 
 namespace dae
@@ -13,7 +14,7 @@ namespace dae
 		RenderComponent(GameObject* owner);
 		virtual ~RenderComponent() override = default;
 		virtual void Render();
-
+		glm::vec2 GetSize() const;
 		RenderComponent(const RenderComponent& other) = delete;
 		RenderComponent(RenderComponent&& other) = delete;
 		RenderComponent& operator=(const RenderComponent& other) = delete;

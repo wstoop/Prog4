@@ -7,7 +7,6 @@
 
 namespace dae
 {
-    // ---- Internal key types ----
 
     struct ControllerBindKey
     {
@@ -45,8 +44,6 @@ namespace dae
         }
     };
 
-    // ---- Pimpl ----
-
     struct InputManager::Impl
     {
         uint32_t m_nextControllerIndex{ 0 };
@@ -72,7 +69,6 @@ namespace dae
 
         bool ProcessInput()
         {
-            // SDL event pump
             SDL_Event e;
             while (SDL_PollEvent(&e))
             {

@@ -79,3 +79,8 @@ void dae::RenderComponent::Render()
 		}
 	}
 }
+
+glm::vec2 dae::RenderComponent::GetSize() const
+{
+	return m_texture->GetSize();
+}

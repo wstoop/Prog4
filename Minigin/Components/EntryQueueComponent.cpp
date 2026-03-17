@@ -1,5 +1,6 @@
 #include "EntryQueueComponent.h"
 #include "EnemyEntryComponent.h"
+#include "../GameObject.h"
 #include <algorithm>
 
 dae::EntryQueueComponent::EntryQueueComponent(GameObject* owner, std::vector<dae::EntryBatch> batches)
@@ -28,7 +29,7 @@ void dae::EntryQueueComponent::Update()
     bool allDone = std::all_of(
         m_batches[m_currentBatch].enemies.begin(),
         m_batches[m_currentBatch].enemies.end(),
-        [](EnemyEntryComponent* e) { return e->IsDocked(); }
+        [](EnemyEntryComponent* e) { return e->IsDocked() || e->GetOwner()->m_destroy; }
     );
 
     if (allDone)

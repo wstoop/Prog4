@@ -9,10 +9,11 @@ namespace dae
     {
     public:
         BulletComponent(GameObject* owner);
-        void Activate(float x, float y, float dirX, float dirY, float speed);
+        void Activate(GameObject* shooter, float x, float y, float dirX, float dirY, float speed);
         void Deactivate();
 		bool IsActive() const { return m_active; }
 		void SetActive(bool active) { m_active = active; }
+        GameObject* GetShooter() const { return m_shooter; }
         void Update() override;
 
     private:
@@ -21,5 +22,6 @@ namespace dae
         float m_speed{};
         bool m_active{ false };
         TransformComponent* m_transform{};
+		GameObject* m_shooter{};
     };
 }

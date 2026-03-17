@@ -11,16 +11,21 @@
 #include "Components/TransformComponent.h"
 #include "Components/TextComponent.h"
 #include "Components/TextureComponent.h"
-#include "Components/AnimationComponent.h"
+#include "Components/AnimationComponent.h" 
 #include "Components/FormationComponent.h"
 #include "Components/EnemyEntryComponent.h"
 #include "Components/EntryQueueComponent.h"
 #include "Components/ScrollBackgroundComponent.h"
 #include "Components/ThrashCacheComponent.h"
+#include "Components/HealthComponent.h"
+#include "Components/ShootComponent.h"
+#include "Components/HitboxComponent.h"
 #include "Input/InputManager.h"
 #include "Commands/MoveCommand.h"
 #include "Commands/ShootCommand.h"
-#include "Input/Controller.h"
+#include "Components/EnemyFormationSlotComponent.h"
+#include "Components/ScoreDisplayComponent.h"
+#include "Components/EnemyDataComponent.h"
 #include "EnemyFactory.h"
 #include "Scene.h"
 
@@ -33,6 +38,7 @@ enum class PlayerInputType
 	Thumbstick,
 	DPad
 };
+
 void CreateBackground(dae::Scene& scene, const std::string& fileName)
 {
 	auto background = std::make_unique<dae::GameObject>();
@@ -51,7 +57,7 @@ void CreateBackground(dae::Scene& scene, const std::string& fileName)
 	scene.Add(std::move(bgB));
 }
 
-void CreateHUD(dae::Scene& scene)
+void CreateHUD(dae::Scene& scene, dae::GameObject* playerPtr)
 {
 	auto font = dae::ResourceManager::GetInstance().LoadFont("ArcadeFont.otf", 36);
 
@@ -77,9 +83,17 @@ void CreateHUD(dae::Scene& scene)
 	CreateText("SCORE", redText, { 670, 95, 0 });
 	CreateText("30000", whiteText, { 670, 115, 0 });
 
+	CreateText("WASD  or  Left  Stick  to  Move", whiteText, { 30, 30, 0 });
+	CreateText("Space  or  B  to  Shoot", whiteText, { 30, 60, 0 });
+	CreateText("X  to  die", whiteText, { 30, 90, 0 });
+
 	//p1 score
 	CreateText("1UP", redText, { 650, 180, 0 });
-	CreateText("00", whiteText, { 720, 220, 0 });
+	auto p1Score = std::make_unique<dae::GameObject>();
+	p1Score->GetComponent<dae::TransformComponent>()->SetLocalPosition({ 600, 220, 0 });
+	p1Score->AddComponent<dae::TextComponent>("00", font, whiteText);
+	p1Score->AddComponent<dae::ScoreDisplayComponent>(playerPtr);
+	scene.Add(std::move(p1Score));
 
 	//p2 score
 	CreateText("2UP", redText, { 650, 280, 0 });
@@ -125,31 +139,35 @@ void CreateHUD(dae::Scene& scene)
 
 void CreateEnemies(dae::Scene& scene)
 {
-	dae::EnemyFactory::Register('B', []()
-		{
-			auto enemy = std::make_unique<dae::GameObject>();
-			//enemy->AddComponent<dae::TextureComponent>("bee.png");
-			enemy->AddComponent<dae::AnimationComponent>("beeIdle.png", 2, 1, 0.2f);
-			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
-			return enemy;
+	dae::EnemyFactory::Register('B', []() {
+		auto enemy = std::make_unique<dae::GameObject>();
+		enemy->AddComponent<dae::AnimationComponent>("beeIdle.png", 2, 1, 0.2f);
+		enemy->AddComponent<dae::HitboxComponent>(13.f * 3, 11.f * 3);
+		enemy->AddComponent<dae::HealthComponent>(1.f);
+		enemy->AddComponent<dae::EnemyDataComponent>(50);
+		enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ -100, -100, 0 });
+		return enemy;
 		});
 
-	dae::EnemyFactory::Register('W', []()
-		{
-			auto enemy = std::make_unique<dae::GameObject>();
-			//enemy->AddComponent<dae::TextureComponent>("butterfly.png");
-			enemy->AddComponent<dae::AnimationComponent>("butterflyIdle.png", 2, 1, 0.2f);
-			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
-			return enemy;
+	dae::EnemyFactory::Register('W', []() {
+		auto enemy = std::make_unique<dae::GameObject>();
+		enemy->AddComponent<dae::AnimationComponent>("butterflyIdle.png", 2, 1, 0.2f);
+		enemy->AddComponent<dae::HitboxComponent>(13.f * 3, 10.f * 3);
+		enemy->AddComponent<dae::HealthComponent>(1.f);
+		enemy->AddComponent<dae::EnemyDataComponent>(80);
+		enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ -100, -100, 0 });
+		return enemy;
 		});
 
-	dae::EnemyFactory::Register('G', []()
-		{
-			auto enemy = std::make_unique<dae::GameObject>();
-			//enemy->AddComponent<dae::TextureComponent>("bird.png");
-			enemy->AddComponent<dae::AnimationComponent>("birdIdle.png", 2, 2, 0.2f);
-			enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100.f, -100.f, 0.f });
-			return enemy;
+	dae::EnemyFactory::Register('G', []() {
+		auto enemy = std::make_unique<dae::GameObject>();
+		enemy->AddComponent<dae::AnimationComponent>("birdIdle.png", 2, 2, 0.2f);
+		enemy->AddComponent<dae::HitboxComponent>(15.f * 3, 16.f * 3);
+		enemy->AddComponent<dae::HealthComponent>(2.f);
+		enemy->AddComponent<dae::EnemyDataComponent>(150);
+		enemy->GetComponent<dae::EnemyDataComponent>()->SetBoss();
+		enemy->GetComponent<dae::TransformComponent>()->SetLocalPosition(glm::vec3{ -100, -100, 0 });
+		return enemy;
 		});
 
 	float spacingX{ 45.f };
@@ -162,25 +180,50 @@ void CreateEnemies(dae::Scene& scene)
 		->SetLocalPosition({ 120.f, 200.f, 0.f });
 	formationMover->AddComponent<dae::FormationComponent>();
 	auto* formationPtr = formationMover.get();
+	auto* formationComp = formationPtr->GetComponent<dae::FormationComponent>();
+
 	int enemyCount = 0;
 	std::vector<std::vector<dae::EnemyEntryComponent*>> enemiesByCol(formationData[0].size());
+
+	// --- Pre-compute formation center so slot components can receive it ---
+	// Center X = average of all slot X positions; center Y = minimum slot Y
+	glm::vec3 formationCenter{};
+	{
+		glm::vec3 sum{};
+		float minY = std::numeric_limits<float>::max();
+		int count = 0;
+		for (size_t row = 0; row < formationData.size(); ++row)
+			for (size_t col = 0; col < formationData[row].size(); ++col)
+			{
+				if (formationData[row][col] == '.') continue;
+				float x = col * spacingX;
+				float y = row * spacingY;
+				sum.x += x;
+				if (y < minY) minY = y;
+				++count;
+			}
+		if (count > 0)
+		{
+			formationCenter.x = sum.x / static_cast<float>(count);
+			formationCenter.y = minY;
+		}
+	}
+
 	for (size_t row = 0; row < formationData.size(); ++row)
 	{
 		for (size_t col = 0; col < formationData[row].size(); ++col)
 		{
 			char cell = formationData[row][col];
-
-			if (cell == '.')
-				continue;
+			if (cell == '.') continue;
 
 			auto enemy = dae::EnemyFactory::Create(cell);
-			if (!enemy)
-				continue;
+			if (!enemy) continue;
 
+			enemy->tag = "Enemy";
 			auto* transform = enemy->GetComponent<dae::TransformComponent>();
 
 			glm::vec3 localTarget{ col * spacingX, row * spacingY, 0.f };
-			glm::vec3 target{
+			glm::vec3 worldTarget{
 				formationPtr->GetComponent<dae::TransformComponent>()->GetLocalPosition().x + localTarget.x,
 				formationPtr->GetComponent<dae::TransformComponent>()->GetLocalPosition().y + localTarget.y,
 				0.f
@@ -191,9 +234,16 @@ void CreateEnemies(dae::Scene& scene)
 			enemy->AddComponent<dae::EnemyEntryComponent>(
 				formationPtr,
 				transform,
-				target,
+				worldTarget,
 				2.0f,
 				delay
+			);
+
+			// NEW: slot component — owns breathe offsets, no enemy ptrs in FormationComponent
+			enemy->AddComponent<dae::EnemyFormationSlotComponent>(
+				formationComp,
+				localTarget,       // position in formation-local space
+				formationCenter    // shared center for sway scaling
 			);
 
 			auto* entryComp = enemy->GetComponent<dae::EnemyEntryComponent>();
@@ -230,12 +280,15 @@ void CreateEnemies(dae::Scene& scene)
 	scene.Add(std::move(formationMover));
 }
 
-void CreatePlayer(dae::Scene& scene, PlayerInputType inputType, float movementSpeed, bool bindInput)
+dae::GameObject* CreatePlayer(dae::Scene& scene, PlayerInputType inputType, float movementSpeed, bool bindInput)
 {
 	auto& input = dae::InputManager::GetInstance();
 	auto player = std::make_unique<dae::GameObject>();
+	player->tag = "Player";
 	player->AddComponent<dae::TextureComponent>("Player.png");
 	player->AddComponent<dae::ShootComponent>(800.f);
+	player->AddComponent<dae::HealthComponent>(3.f);
+	player->AddComponent<dae::HitboxComponent>(15.f * 3, 16.f * 3);
 	player->GetComponent<dae::TransformComponent>()
 		->SetLocalPosition({ 300.f, 700.f, 0.f });
 	player->GetComponent<dae::TransformComponent>()
@@ -276,9 +329,12 @@ void CreatePlayer(dae::Scene& scene, PlayerInputType inputType, float movementSp
 				std::make_unique<ShootCommand>(player.get()));
 			break;
 		}
-	}
 
+	}
+	dae::GameObject* playerPtr = player.get();
 	scene.Add(std::move(player));
+	return playerPtr;
+	
 }
 
 void CreateThrashCache(dae::Scene& scene)
@@ -298,26 +354,26 @@ void CreateSinglePlayerScene()
 {
 	auto& scene = dae::SceneManager::GetInstance().CreateScene("SinglePlayer");
 	CreateBackground(scene, "Background_Galaga.png");
-	CreateHUD(scene);
+	auto* playerPtr = CreatePlayer(scene, PlayerInputType::Keyboard, 100.f, true);
+	CreateHUD(scene, playerPtr);
 	CreateEnemies(scene);
-	CreatePlayer(scene, PlayerInputType::Thumbstick, 100.f, false);
 }
 
 void CreateCoOpScene()
 {
 	auto& scene = dae::SceneManager::GetInstance().CreateScene("MultiPlayer");
 	CreateBackground(scene, "Background_Galaga.png");
-	CreateHUD(scene);
+	//CreateHUD(scene);
 	CreateEnemies(scene);
-	CreatePlayer(scene, PlayerInputType::DPad, 200.f, true);
-	CreatePlayer(scene, PlayerInputType::Keyboard, 100.f, true);
+	CreatePlayer(scene, PlayerInputType::DPad, 200.f, false);
+	CreatePlayer(scene, PlayerInputType::Keyboard, 100.f, false);
 }
 
 void CreateVersusScene()
 {
 	auto& scene = dae::SceneManager::GetInstance().CreateScene("Versus");
 	CreateBackground(scene, "Background_Galaga.png");
-	CreateHUD(scene);
+	//CreateHUD(scene);
 	CreateEnemies(scene);
 	CreatePlayer(scene, PlayerInputType::Thumbstick, 100.f, false);
 }
@@ -326,9 +382,9 @@ static void load()
 {
 	CreateMenuScene();
 	CreateSinglePlayerScene();
-	CreateCoOpScene();
+	CreateCoOpScene(); 
 	CreateVersusScene();
-	dae::SceneManager::GetInstance().SetActiveScene("MultiPlayer");
+	dae::SceneManager::GetInstance().SetActiveScene("SinglePlayer");
 }
 
 int main(int, char*[]) {

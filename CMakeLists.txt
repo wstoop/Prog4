@@ -137,7 +137,7 @@ target_include_directories("${TARGET_NAME}" PUBLIC
   ${VLD_INCLUDE_DIR}
 )
 
-target_link_libraries("${TARGET_NAME}" PUBLIC
+target_link_libraries("${TARGET_NAME}" PUBLIC  
   SDL3::SDL3
   SDL3_ttf::SDL3_ttf
   glm::glm
