@@ -12,17 +12,12 @@ namespace dae
         TransformComponent* m_transform{ nullptr };
         FormationComponent* m_formation{ nullptr };
 
-        glm::vec3 m_slotLocalPos{};
-        glm::vec3 m_formationCenter{};
-
         bool m_active{ false };
         bool m_notifiedDeath{ false };
 
     public:
         EnemyFormationSlotComponent(GameObject* owner,
-            FormationComponent* formation,
-            const glm::vec3& slotLocalPos,
-            const glm::vec3& formationCenter);
+            FormationComponent* formation);
 		~EnemyFormationSlotComponent() override;
         void Update() override;
 

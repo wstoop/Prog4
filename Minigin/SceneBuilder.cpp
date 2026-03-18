@@ -296,7 +296,7 @@ void SceneBuilder::SpawnEnemies(dae::Scene& scene) const
             enemy->AddComponent<dae::EnemyEntryComponent>(
                 formationPtr, transform, worldTarget, 2.0f, delay);
             enemy->AddComponent<dae::EnemyFormationSlotComponent>(
-                formationComp, localTarget, formationCenter);
+                formationComp);
 
             enemiesByCol[col].push_back(enemy->GetComponent<dae::EnemyEntryComponent>());
             ++enemyCount;
