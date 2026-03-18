@@ -26,17 +26,17 @@ void dae::FormationComponent::Update()
 
 void dae::FormationComponent::LeftRight()
 {
-    //m_time += TimeManager::GetInstance().GetDeltaTime();
-    //if (m_time >= 0.45f)
-    //{
-    //    m_time = 0.f;
-    //    if (m_moveLeft) m_horizontalOffset *= -1.f;
-    //    m_transform->SetLocalPosition({
-    //        m_transform->GetLocalPosition().x + m_horizontalOffset,
-    //        m_transform->GetLocalPosition().y,
-    //        0.f });
-    //    m_moveLeft = !m_moveLeft;
-    //}
+    m_time += TimeManager::GetInstance().GetDeltaTime();
+    if (m_time >= 0.45f)
+    {
+        m_time = 0.f;
+        if (m_moveLeft) m_horizontalOffset *= -1.f;
+        m_transform->SetLocalPosition({
+            m_transform->GetLocalPosition().x + m_horizontalOffset,
+            m_transform->GetLocalPosition().y,
+            0.f });
+        m_moveLeft = !m_moveLeft;
+    }
 }
 
 void dae::FormationComponent::AdvanceBreath()
