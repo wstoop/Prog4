@@ -5,10 +5,13 @@
 
 dae::EnemyFormationSlotComponent::EnemyFormationSlotComponent(
     GameObject* owner,
-    FormationComponent* formation)
+    FormationComponent* formation,
+    const glm::vec3& slotLocalPos,
+    const glm::vec3& formationCenter)
     : Component(owner)
     , m_formation(formation)
-
+    , m_slotLocalPos(slotLocalPos)
+    , m_formationCenter(formationCenter)
 {
     m_transform = owner->GetComponent<TransformComponent>();
 }
