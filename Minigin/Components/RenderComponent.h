@@ -14,7 +14,7 @@ namespace dae
 		RenderComponent(GameObject* owner);
 		virtual ~RenderComponent() override = default;
 		virtual void Render();
-		glm::vec2 GetSize() const;
+		virtual glm::vec2 GetSize() const;
 		RenderComponent(const RenderComponent& other) = delete;
 		RenderComponent(RenderComponent&& other) = delete;
 		RenderComponent& operator=(const RenderComponent& other) = delete;

@@ -22,8 +22,8 @@ void ExplosionPool::ActivateExplosion(const glm::vec3 & enemyCenter)
     if (anim && transform)
     {
         glm::vec3 finalPos{};
-        finalPos.x = enemyCenter.x - (anim->GetSize().x / 10.f);
-        finalPos.y = enemyCenter.y - (anim->GetSize().y / 2.f);
+        finalPos.x = enemyCenter.x - (anim->GetSize().x / 2);
+        finalPos.y = enemyCenter.y - (anim->GetSize().y / 2);
 
         transform->SetLocalPosition(finalPos);
         anim->Play();
@@ -34,7 +34,7 @@ std::unique_ptr<dae::GameObject> ExplosionPool::CreateExplosion() const
 {
     auto explosion = std::make_unique<dae::GameObject>();
 
-    explosion->AddComponent<dae::AnimationComponent>("explosion.png", 5, 1, 0.035f, false);
+    explosion->AddComponent<dae::AnimationComponent>("explosion.png", 5, 1, 0.08f, false);
 
     if (auto* transform = explosion->GetComponent<dae::TransformComponent>())
     {

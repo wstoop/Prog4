@@ -21,6 +21,7 @@ namespace dae
         void SetRow(int row);
         void SetFrame(int frame);
         bool IsPlaying() const { return m_Playing; }
+        glm::vec2 GetSize() const override;
     private:
         void UpdateSourceRect();
 

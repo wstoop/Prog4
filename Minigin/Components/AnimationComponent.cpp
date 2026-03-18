@@ -82,3 +82,8 @@ void dae::AnimationComponent::UpdateSourceRect()
     m_SourceRect.w = frameWidth;
     m_SourceRect.h = frameHeight;
 }
+
+glm::vec2 dae::AnimationComponent::GetSize() const
+{
+    return { m_SourceRect.w, m_SourceRect.h };
+}

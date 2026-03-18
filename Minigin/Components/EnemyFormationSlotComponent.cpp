@@ -21,8 +21,8 @@ void dae::EnemyFormationSlotComponent::Update()
     if (!m_active) return;
     if (GetOwner()->m_destroy) return;
 
-    glm::vec3 sway = m_formation->ComputeSwayOffset(m_slotLocalPos, m_formationCenter);
-    m_transform->SetLocalPosition(m_slotLocalPos + sway);
+    //glm::vec3 sway = m_formation->ComputeSwayOffset(m_slotLocalPos, m_formationCenter);
+    //m_transform->SetLocalPosition(m_slotLocalPos + sway);
 }
 
 void dae::EnemyFormationSlotComponent::Activate()
