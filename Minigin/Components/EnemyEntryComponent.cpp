@@ -1,30 +1,37 @@
 #include "EnemyEntryComponent.h"
 #include "TransformComponent.h"
 #include "FormationComponent.h"
+#include "EnemyFormationSlotComponent.h"
 #include "../GameObject.h"
 #include "../TimeManager.h"
 #include "../GameInfo.h"
 
 dae::EnemyEntryComponent::EnemyEntryComponent(GameObject* owner, GameObject* formationParent, TransformComponent* transform, const glm::vec3& target, float duration, float startDelay)
-	: Component(owner)
-	, m_duration(duration)
-	, m_startDelay(startDelay)
-	, m_endPoint(target)
-	, m_transform(transform)
-	, m_formationParent(formationParent)
+    : Component(owner)
+    , m_duration(duration)
+    , m_startDelay(startDelay)
+    , m_endPoint(target)
+    , m_transform(transform)
+    , m_formationParent(formationParent)
 {
 }
 
 void dae::EnemyEntryComponent::Update()
 {
-    if (m_done)
+    if (GetOwner()->m_destroy)
     {
+        // Died before docking — notify slot so formation count stays correct.
+        // The slot's m_notifiedDeath guard prevents double-counting.
+        if (!m_done)
+        {
+            if (auto* slot = GetOwner()->GetComponent<EnemyFormationSlotComponent>())
+                slot->NotifyIfDied();
+        }
         return;
     }
-	if (!m_start)
-    {
-        return;
-    }
+
+    if (m_done) return;
+    if (!m_start) return;
 
     float dt = dae::TimeManager::GetInstance().GetDeltaTime();
     if (m_startDelay > 0.f)
@@ -32,17 +39,22 @@ void dae::EnemyEntryComponent::Update()
         m_startDelay -= dt;
         return;
     }
+
     m_elapsed += dt;
     float totalT = m_elapsed / m_duration;
     if (totalT >= 1.f)
     {
         m_transform->SetLocalPosition(m_endPoint);
         m_transform->SetParent(m_formationParent, true);
-        m_formationParent->GetComponent<FormationComponent>()->RegisterEnemy(m_transform);
-        m_transform->SetRotation(0.f, 0.f,0.f);
+        m_transform->SetRotation(0.f, 0.f, 0.f);
+
+        if (auto* slot = GetOwner()->GetComponent<EnemyFormationSlotComponent>())
+            slot->Activate();
+
         m_done = true;
         return;
     }
+
     const Segment* activeSeg = nullptr;
     float localT = 0.f;
     for (const auto& seg : m_segments)
@@ -79,8 +91,6 @@ void dae::EnemyEntryComponent::Update()
             -std::sin(currentAngle),
             std::cos(currentAngle)
         );
-
-        // Flip if sweep is negative
         if (seg.sweepAngle < 0)
             tangent = -tangent;
 
@@ -95,12 +105,11 @@ void dae::EnemyEntryComponent::Update()
 void dae::EnemyEntryComponent::BasicTopEntry(bool fromLeft)
 {
     float radius = 60.f;
-	int horizontalOffset = 200;
+    int horizontalOffset = 200;
     float direction = fromLeft ? 1.f : -1.f;
 
     glm::vec3 start{};
     glm::vec3 turnEntry{};
-    // Phase 0: diagonal entry
     start = { (dae::GameInfo::GetInstance().GetGameWidth() / 2) - (horizontalOffset * direction), -100.f, 0.f };
     turnEntry = { (dae::GameInfo::GetInstance().GetGameWidth() / 2) + (horizontalOffset * direction), 500.f, 0.f };
 
@@ -110,11 +119,10 @@ void dae::EnemyEntryComponent::BasicTopEntry(bool fromLeft)
     lineSeg.p3 = turnEntry;
     m_segments.push_back(lineSeg);
 
-    // Phase 1: loop
     glm::vec3 circleCenter = turnEntry + glm::vec3(-direction * radius, 0.f, 0.f);
     float startAngle = fromLeft ? 0.f : 3.14f;
     float sweepAngle = fromLeft ? 1.f * 3.14f : -1.f * 3.14f;
-    
+
     Segment arcSeg{};
     arcSeg.type = SegmentType::Arc;
     arcSeg.center = circleCenter;
@@ -123,7 +131,6 @@ void dae::EnemyEntryComponent::BasicTopEntry(bool fromLeft)
     arcSeg.sweepAngle = sweepAngle;
     m_segments.push_back(arcSeg);
 
-    //Phase 3: exit loop and go to target position
     float exitAngle = startAngle + sweepAngle;
     glm::vec3 arcExit = circleCenter + glm::vec3(std::cos(exitAngle) * radius, std::sin(exitAngle) * radius, 0.f);
     Segment exitLine{};
@@ -145,7 +152,6 @@ void dae::EnemyEntryComponent::BasicSideEntry(bool fromLeft)
     glm::vec3 start{};
     glm::vec3 turnEntry{};
 
-    // Phase 0: horizontal entry from side
     if (fromLeft)
     {
         start = { -100.f, screenHeight * 0.6f, 0.f };
@@ -163,9 +169,7 @@ void dae::EnemyEntryComponent::BasicSideEntry(bool fromLeft)
     lineSeg.p3 = turnEntry;
     m_segments.push_back(lineSeg);
 
-    // Phase 1: vertical half-loop (turning downward)
     glm::vec3 circleCenter = turnEntry + glm::vec3(0.f, direction * radius, 0.f);
-
     float startAngle = fromLeft ? -3.14f / 2.f : 3.14f / 2.f;
     float sweepAngle = fromLeft ? 3.14f : -3.14f;
 
@@ -177,13 +181,9 @@ void dae::EnemyEntryComponent::BasicSideEntry(bool fromLeft)
     arcSeg.sweepAngle = sweepAngle;
     m_segments.push_back(arcSeg);
 
-    // Phase 2: exit arc and go to target position
     float exitAngle = startAngle + sweepAngle;
-
     glm::vec3 arcExit = circleCenter +
-        glm::vec3(std::cos(exitAngle) * radius,
-            std::sin(exitAngle) * radius,
-            0.f);
+        glm::vec3(std::cos(exitAngle) * radius, std::sin(exitAngle) * radius, 0.f);
 
     Segment exitLine{};
     exitLine.type = SegmentType::Line;

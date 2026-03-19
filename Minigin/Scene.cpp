@@ -1,6 +1,8 @@
 #include <algorithm>
 #include "Scene.h"
 #include "BulletPool.h"
+#include "ExplosionPool.h"
+#include "EventManager.h"
 #include <assert.h>
 using namespace dae;
 
@@ -27,8 +29,6 @@ void Scene::Update()
 	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
 		obj->Update();
 		});
-
-	dae::BulletPool::GetInstance().Update();
 }
 
 void Scene::LateUpdate()
@@ -36,6 +36,9 @@ void Scene::LateUpdate()
 	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
 		obj->LateUpdate();
 		});
+	EventManager::GetInstance().Update();
+	BulletPool::GetInstance().Update();
+	ExplosionPool::GetInstance().Update();
 	PurgeDestroyedObjects();
 }
 
@@ -52,7 +55,8 @@ void Scene::Render() const
 		obj->Render();
 		});
 
-	dae::BulletPool::GetInstance().Render();
+	BulletPool::GetInstance().Render();
+	ExplosionPool::GetInstance().Render();
 }
 
 void Scene::PurgeDestroyedObjects()

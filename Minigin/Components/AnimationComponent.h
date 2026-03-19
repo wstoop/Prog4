@@ -11,15 +11,17 @@ namespace dae
             const std::string& texture,
             int columns,
             int rows = 1,
-            float frameTime = 0.1f);
+            float frameTime = 0.1f,
+            bool loop = true);
 
         void Update() override;
 
-        void Play() { m_Playing = true; }
+        void Play() { m_Playing = true;  m_CurrentFrame = 0; m_Accumulator = 0.0f;}
         void Stop() { m_Playing = false; }
         void SetRow(int row);
         void SetFrame(int frame);
-
+        bool IsPlaying() const { return m_Playing; }
+        glm::vec2 GetSize() const override;
     private:
         void UpdateSourceRect();
 
@@ -31,5 +33,6 @@ namespace dae
         float m_FrameTime{};
         float m_Accumulator{};
         bool m_Playing{ true };
+        bool m_loop{};
     };
 }

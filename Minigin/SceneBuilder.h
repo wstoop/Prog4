@@ -1,0 +1,98 @@
+#pragma once
+
+#include <string>
+#include <vector>
+#include <memory>
+#include <functional>
+#include <glm/glm.hpp>
+#include "Input/InputManager.h"
+
+namespace dae { class Scene; class GameObject; }
+
+//Input types
+enum class PlayerInputType { Keyboard, Thumbstick, DPad };
+
+//Geenral player stats
+struct PlayerConfig
+{
+    PlayerInputType inputType = PlayerInputType::Keyboard;
+    float speed = 100.f;
+    glm::vec3 spawnPos = { 300.f, 700.f, 0.f };
+    int lives = 4;
+    float maxHp = 1.f;
+
+    static PlayerConfig Keyboard(float speed = 100.f, glm::vec3 pos = { 300.f, 700.f, 0.f })
+    {
+        return { PlayerInputType::Keyboard, speed, pos };
+    }
+    static PlayerConfig Controller(PlayerInputType stick, float speed = 100.f,
+        glm::vec3 pos = { 500.f, 700.f, 0.f })
+    {
+        return { stick, speed, pos };
+    }
+};
+
+//stores input and commands per scene
+struct SceneInputBinding
+{
+    struct PlayerBinding
+    {
+        dae::GameObject* playerPtr = nullptr;
+        PlayerConfig     config;
+        uint32_t         controllerID = UINT32_MAX;
+    };
+
+    std::vector<PlayerBinding> players;
+
+    // Bind the commands in this scene
+    void Bind();
+
+    // Removes commands in the current scene
+    void Unbind();
+
+    //Unbind previous inputs, binds the next ones
+    void SwitchFrom(SceneInputBinding& previous);
+};
+
+//result after making a scene, gives amount of players and all the command bindings
+struct BuildResult
+{
+    std::vector<dae::GameObject*> playerPtrs;
+    SceneInputBinding inputBinding;
+};
+
+
+class SceneBuilder
+{
+public:
+    //makes a new scene
+    explicit SceneBuilder(const std::string& sceneName);
+
+    //used to add stuff to the scene
+    SceneBuilder& WithBackground(const std::string& textureFile,
+        float screenW = 600.f, float screenH = 830.f);
+    SceneBuilder& WithEnemies(const std::string& formationFile = "formation1.txt");
+    SceneBuilder& WithPlayer(const PlayerConfig& cfg);
+    SceneBuilder& WithHUDForPlayer(int playerIndex);
+
+    //called at the end to build the scene
+    BuildResult Build();
+
+private:
+    //All of these are helper functions to add required things to a scene
+    void SpawnBackground(dae::Scene& scene) const;
+    void SpawnEnemies(dae::Scene& scene) const;
+    dae::GameObject* SpawnPlayer(dae::Scene& scene, const PlayerConfig& cfg) const;
+    void SpawnHUD(dae::Scene& scene, dae::GameObject* playerPtr, int playerIndex) const;
+
+    //Member variables set using WithBlablabla()
+    std::string m_sceneName;
+    std::string m_backgroundFile;
+    float m_screenW = 600.f;
+    float m_screenH = 830.f;
+    bool m_hasBackground = false;
+    bool m_hasEnemies = false;
+    std::string m_formationFile = "formation1.txt";
+    std::vector<PlayerConfig> m_players;
+    std::vector<int> m_hudPlayerIndices;
+};

@@ -43,7 +43,7 @@ namespace dae
             bulletHalfH = (bulletSprite->GetTexture()->GetSize().y) * 0.5f;
         }
 
-        bulletComp->Activate(
+        bulletComp->Activate(GetOwner(),
             pos.x + spriteHalfW - bulletHalfW,
             pos.y + spriteHalfH - bulletHalfH,
             dirX, dirY, m_speed);

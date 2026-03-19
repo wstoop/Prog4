@@ -20,7 +20,7 @@ namespace dae
 		glm::vec3 m_rotation{};
 	public:
 		TransformComponent(GameObject* owner);
-		
+		~TransformComponent();
 		const glm::vec3& GetWorldPosition();
 		const glm::vec3& GetLocalPosition() const { return m_localPosition; }
 		const glm::vec3& GetScale() const { return m_scale; }

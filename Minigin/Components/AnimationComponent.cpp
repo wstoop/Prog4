@@ -8,11 +8,13 @@ dae::AnimationComponent::AnimationComponent(GameObject* owner,
     const std::string& texture,
     int columns,
     int rows,
-    float frameTime)
+    float frameTime,
+    bool loop)
     : RenderComponent(owner)
     , m_Columns(columns)
     , m_Rows(rows)
     , m_FrameTime(frameTime)
+    , m_loop(loop)
 {
        m_texture = ResourceManager::GetInstance().LoadTexture(texture);
        m_UseSourceRect = true;
@@ -23,12 +25,32 @@ void dae::AnimationComponent::Update()
 {
     if (!m_Playing || m_Columns <= 1)
         return;
+
     m_Accumulator += TimeManager::GetInstance().GetDeltaTime();
     while (m_Accumulator >= m_FrameTime)
     {
         m_Accumulator -= m_FrameTime;
-        m_CurrentFrame = (m_CurrentFrame + 1) % m_Columns;
+
+        if (m_CurrentFrame + 1 >= m_Columns)
+        {
+            if (m_loop)
+            {
+                m_CurrentFrame = 0;
+            }
+            else
+            {
+                m_CurrentFrame = m_Columns - 1;
+                m_Playing = false;
+                m_Accumulator = 0.f;
+                break;
+            }
+        }
+        else
+        {
+            ++m_CurrentFrame;
+        }
     }
+
     UpdateSourceRect();
 }
 
@@ -59,4 +81,9 @@ void dae::AnimationComponent::UpdateSourceRect()
     m_SourceRect.y = m_CurrentRow * frameHeight;
     m_SourceRect.w = frameWidth;
     m_SourceRect.h = frameHeight;
+}
+
+glm::vec2 dae::AnimationComponent::GetSize() const
+{
+    return { m_SourceRect.w, m_SourceRect.h };
 }

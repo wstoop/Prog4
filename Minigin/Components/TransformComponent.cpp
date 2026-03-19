@@ -107,6 +107,7 @@ bool dae::TransformComponent::IsChild(GameObject* child) const
 
 void dae::TransformComponent::SetPositionDirty()
 {
+    if (GetOwner()->m_destroy) return;
     m_positionIsDirty = true;
     std::for_each(m_children.begin(), m_children.end(), [](GameObject* child) {
         child->GetComponent<TransformComponent>()->SetPositionDirty();
@@ -117,4 +118,15 @@ void dae::TransformComponent::SetPositionDirty()
 dae::GameObject* dae::TransformComponent::GetParent()
 {
     return m_parent;
+}
+
+dae::TransformComponent::~TransformComponent()
+{
+    if (m_parent && !m_parent->m_destroy)
+    {
+        auto* parentToNotify = m_parent;
+        m_parent = nullptr;
+        parentToNotify->GetComponent<TransformComponent>()->RemoveChild(this->GetOwner());
+    }
+    m_parent = nullptr;
 }
