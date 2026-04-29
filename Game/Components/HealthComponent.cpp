@@ -24,12 +24,34 @@ namespace dae
         if (e->data.self != GetOwner()) return;
         if (m_Filter && !m_Filter(e->data.self, e->data.other)) return;
 
+        // --- SOUND LOGIC BEFORE DAMAGE ---
+        auto* data = GetOwner()->GetComponent<EnemyDataComponent>();
+        float beforeHp = m_CurrentHealth;
+
+        if (data && !m_IsDead)
+        {
+            if (data->IsBoss())
+            {
+                ServiceLocator::GetSoundSystem().Play(
+                    data->GetBossHitSound(static_cast<int>(beforeHp)),
+                    1.0f
+                );
+            }
+            else
+            {
+                ServiceLocator::GetSoundSystem().Play(
+                    data->GetHitSound(),
+                    1.0f
+                );
+            }
+        }
         TakeDamage(1.f);
+
         auto* bullet = e->data.other->GetComponent<BulletComponent>();
         if (bullet == nullptr) return;
         bullet->Deactivate();
 
-        if (auto* data = GetOwner()->GetComponent<EnemyDataComponent>())
+        if (data)
         {
             EventManager::GetInstance().SendEvent(
                 std::make_unique<DataEvent<ScoreEvent>>(

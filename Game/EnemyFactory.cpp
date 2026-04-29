@@ -55,6 +55,7 @@ void dae::EnemyFactory::RegisterDefaults()
             e->AddComponent<dae::AnimationComponent>("beeIdle.png", 2, 1, 0.2f);
             e->AddComponent<dae::HitboxComponent>(13.f * 3, 11.f * 3);
             e->AddComponent<dae::EnemyDataComponent>(50);
+            e->GetComponent<EnemyDataComponent>()->SetHitSound(SOUND_ENEMY_HIT);
             auto* hp = e->AddComponent<dae::HealthComponent>(1.f);
             hp->SetDamageFilter(DamageFilter);
             hp->RegisterDeathCallback(DeathCallback);
@@ -69,6 +70,7 @@ void dae::EnemyFactory::RegisterDefaults()
             e->AddComponent<dae::AnimationComponent>("butterflyIdle.png", 2, 1, 0.2f);
             e->AddComponent<dae::HitboxComponent>(13.f * 3, 10.f * 3);
             e->AddComponent<dae::EnemyDataComponent>(80);
+            e->GetComponent<EnemyDataComponent>()->SetHitSound(SOUND_ENEMY_HIT);
             auto* hp = e->AddComponent<dae::HealthComponent>(1.f);
             hp->SetDamageFilter(DamageFilter);
             hp->RegisterDeathCallback(DeathCallback);
@@ -83,6 +85,8 @@ void dae::EnemyFactory::RegisterDefaults()
             e->AddComponent<dae::AnimationComponent>("birdIdle.png", 2, 2, 0.2f);
             e->AddComponent<dae::HitboxComponent>(15.f * 3, 16.f * 3);
             e->AddComponent<dae::EnemyDataComponent>(150);
+            e->GetComponent<EnemyDataComponent>()->SetBossHitSounds(SOUND_BOSS_HIT_1, SOUND_BOSS_HIT_2);
+            e->GetComponent<EnemyDataComponent>()->SetHitSound(SOUND_ENEMY_HIT);
             e->GetComponent<dae::EnemyDataComponent>()->SetBoss();
             auto* hp = e->AddComponent<dae::HealthComponent>(2.f);
             hp->SetDamageFilter(DamageFilter);

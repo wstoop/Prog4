@@ -395,8 +395,9 @@ void SceneBuilder::SpawnHUD(dae::Scene& scene, dae::GameObject* playerPtr, int p
     {
         AddLabel("P1: WASD to move / Space to shoot", white, { 30, 30, 0 });
         AddLabel("P2: DPAD to move / A to shoot", white, { 30, 60, 0 });
-        AddLabel("press X (kb and ctrlr respectfullly) to die", white, { 30, 110, 0 });
-        AddLabel("(can also die by contact with enemy)", white, { 30, 140, 0 });
+        AddLabel("Shooting enemies has sounds", white, { 30, 110, 0 });
+        AddLabel("press X (kb and ctrlr respectfullly) to die", white, { 30, 160, 0 });
+        AddLabel("(can also die by contact with enemy)", white, { 30, 190, 0 });
 
         AddLabel("HIGH", red, { 650,  75, 0 });
         AddLabel("SCORE", red, { 670,  95, 0 });
