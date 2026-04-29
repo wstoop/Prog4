@@ -20,11 +20,17 @@ namespace dae
 		SceneManager& m_sceneManager;
 		InputManager& m_input;
 		TimeManager& m_timeManager;
+
+		std::function<void()> m_gameUpdate{};
+		std::function<void()> m_gameRender{};
 	public:
 		explicit Minigin(const std::filesystem::path& dataPath);
 		~Minigin();
 		void Run(const std::function<void()>& load);
 		void RunOneFrame();
+
+		void SetGameUpdate(const std::function<void()>& fn) { m_gameUpdate = fn; }
+		void SetGameRender(const std::function<void()>& fn) { m_gameRender = fn; }
 
 		Minigin(const Minigin& other) = delete;
 		Minigin(Minigin&& other) = delete;
