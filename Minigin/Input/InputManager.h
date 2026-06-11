@@ -68,8 +68,8 @@ namespace dae
 		void UnbindCommand(int scancode, KeyState state);
 
 		// Keyboard axis (WASD / arrow keys)
-		void BindCommand(KeyboardAxis axis, std::unique_ptr<AxisCommand> command);
-		void UnbindCommand(KeyboardAxis axis);
+		void BindCommand(KeyboardAxis axis, KeyState state, std::unique_ptr<AxisCommand> command);
+		void UnbindCommand(KeyboardAxis axis, KeyState state);
 
 		bool ProcessInput();
 	private:

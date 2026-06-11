@@ -88,6 +88,11 @@ public:
         m_EventQueue.push(std::make_unique<Event>(id));
     }
 
+    void ClearQueue()
+    {
+        m_EventQueue = {};
+    }
+
     void Update()
     {
         std::queue<std::unique_ptr<Event>> processing;

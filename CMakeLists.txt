@@ -5,9 +5,7 @@ if(EMSCRIPTEN)
   message("Using Emscripten!")
 endif()
 
-# -------------------------------------------------------
-# Resolve target names
-# -------------------------------------------------------
+
 if(EMSCRIPTEN)
   set(GAME_TARGET   game_web)
 else()
@@ -16,21 +14,15 @@ endif()
 
 set(ENGINE_TARGET minigin)
 
-# -------------------------------------------------------
-# Sources
-# -------------------------------------------------------
+
 file(GLOB_RECURSE MINIGIN_SOURCES "Minigin/*.cpp" "Minigin/*.h")
 file(GLOB_RECURSE GAME_SOURCES    "Game/*.cpp"    "Game/*.h")
 
-# -------------------------------------------------------
-# Engine static library
-# -------------------------------------------------------
+
 add_library(${ENGINE_TARGET} STATIC ${MINIGIN_SOURCES})
 target_compile_features(${ENGINE_TARGET} PUBLIC cxx_std_20)
 
-# -------------------------------------------------------
-# Game executable
-# -------------------------------------------------------
+
 if(EMSCRIPTEN)
   add_executable(${GAME_TARGET} ${GAME_SOURCES})
 else()
@@ -38,9 +30,7 @@ else()
 endif()
 target_compile_features(${GAME_TARGET} PUBLIC cxx_std_20)
 
-# -------------------------------------------------------
-# Dependencies
-# -------------------------------------------------------
+
 include(FetchContent)
 
 # glm
@@ -54,6 +44,14 @@ if(NOT glm_FOUND)
   )
   FetchContent_MakeAvailable(glm)
 endif()
+
+FetchContent_Declare(
+  nlohmann_json
+  URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+  DOWNLOAD_NO_PROGRESS ON
+  DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/downloads
+)
+FetchContent_MakeAvailable(nlohmann_json)
 
 # SDL3
 find_package(SDL3 3.4 CONFIG QUIET)
@@ -157,7 +155,7 @@ add_library(imgui STATIC
   ${imgui_SOURCE_DIR}/imgui_demo.cpp
   ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
   ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
-  "Game/Components/PoolComponent.h")
+)
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${sdl3_SOURCE_DIR}/include)
 target_link_libraries(imgui PUBLIC SDL3::SDL3)
 target_compile_features(imgui PUBLIC cxx_std_20)
@@ -171,9 +169,6 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/steam")
 find_package(Steamworks QUIET)
 
-# -------------------------------------------------------
-# Engine library — includes & links
-# -------------------------------------------------------
 target_include_directories(${ENGINE_TARGET} PUBLIC
   ${CMAKE_SOURCE_DIR}/Minigin/
   ${sdl3_SOURCE_DIR}/include
@@ -189,6 +184,7 @@ target_link_libraries(${ENGINE_TARGET} PUBLIC
   SDL3_mixer::SDL3_mixer
   glm::glm
   imgui
+  nlohmann_json::nlohmann_json
   ${VLD_LIBRARIES}
 )
 
@@ -196,18 +192,14 @@ if(WIN32)
   target_link_libraries(${ENGINE_TARGET} PUBLIC xinput)
 endif()
 
-# -------------------------------------------------------
-# Game executable — includes & links
-# -------------------------------------------------------
+
 target_include_directories(${GAME_TARGET} PRIVATE
   ${CMAKE_SOURCE_DIR}/Game/
 )
 
 target_link_libraries(${GAME_TARGET} PRIVATE ${ENGINE_TARGET})
 
-# -------------------------------------------------------
-# Compiler warnings (both targets)
-# -------------------------------------------------------
+
 foreach(_tgt ${ENGINE_TARGET} ${GAME_TARGET})
   if(MSVC)
     target_compile_options(${_tgt} PRIVATE /W4 /WX /EHsc)
@@ -216,9 +208,7 @@ foreach(_tgt ${ENGINE_TARGET} ${GAME_TARGET})
   endif()
 endforeach()
 
-# -------------------------------------------------------
-# Platform post-build / deployment (game target only)
-# -------------------------------------------------------
+
 if(EMSCRIPTEN)
   set(EMSCRIPTEN_COMPILE_FLAGS "-g -sUSE_SDL=2 -sUSE_FREETYPE=1 -sUSE_HARFBUZZ=1")
   set(EMSCRIPTEN_LINK_FLAGS
@@ -271,7 +261,6 @@ elseif(WIN32)
 elseif(APPLE)
   set_target_properties(${GAME_TARGET} PROPERTIES
     MACOSX_BUNDLE      TRUE
-    INSTALL_RPATH      "@executable_path/../Frameworks"
     BUILD_WITH_INSTALL_RPATH TRUE
   )
   add_custom_command(TARGET ${GAME_TARGET} POST_BUILD
@@ -302,7 +291,7 @@ elseif(APPLE)
       "$<TARGET_FILE_DIR:${GAME_TARGET}>/Data"
   )
 
-else() # Linux etc.
+else()
   if(Steamworks_FOUND)
     target_link_libraries(${ENGINE_TARGET} PUBLIC Steamworks::Steamworks)
     target_compile_definitions(${ENGINE_TARGET} PRIVATE USE_STEAMWORKS)

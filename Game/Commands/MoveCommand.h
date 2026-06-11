@@ -21,7 +21,6 @@ public:
         auto d = dae::TimeManager::GetInstance().GetDeltaTime();
         auto pos = m_transform->GetLocalPosition();
         pos.x += axis.x * m_speed * d;
-        pos.y -= axis.y * m_speed * d;
         m_transform->SetLocalPosition(pos);
 
     }

@@ -2,6 +2,8 @@
 #include "Components/TransformComponent.h"
 #include "GameObject.h"
 #include "TimeManager.h"
+#include "EventManager.h"
+#include "GameEvents.h"
 #include <cmath>
 
 dae::FormationComponent::FormationComponent(GameObject* owner)
@@ -9,6 +11,8 @@ dae::FormationComponent::FormationComponent(GameObject* owner)
 {
     m_transform = GetOwner()->GetComponent<TransformComponent>();
     m_allEnemies = 999;
+
+    EventManager::GetInstance().AttachEvent(EVENT_PLAYER_TOOK_DAMAGE, this);
 }
 
 void dae::FormationComponent::Update()
@@ -22,6 +26,15 @@ void dae::FormationComponent::Update()
 
     AdvanceBreath();
     LeftRight();
+
+    if (m_waitingForRegroup)
+    {
+        if (m_inFormationCount >= m_aliveEnemyCount)
+        {
+            m_waitingForRegroup = false;
+            EventManager::GetInstance().SendEvent(EVENT_ALL_ENEMIES_RETURNED);
+        }
+    }
 }
 
 void dae::FormationComponent::LeftRight()
@@ -44,10 +57,6 @@ void dae::FormationComponent::AdvanceBreath()
     m_breathTime += dae::TimeManager::GetInstance().GetDeltaTime();
 }
 
-void dae::FormationComponent::NotifyDocked()
-{
-    ++m_dockedCount;
-}
 
 glm::vec3 dae::FormationComponent::ComputeSwayOffset(const glm::vec3& slotLocalPos, const glm::vec3& center) const
 {
@@ -78,9 +87,42 @@ glm::vec3 dae::FormationComponent::ComputeSwayOffset(const glm::vec3& slotLocalP
 void dae::FormationComponent::SetAllEnemies(int enemyCount)
 {
     m_allEnemies = enemyCount;
+    m_aliveEnemyCount = enemyCount;
 }
 
 void dae::FormationComponent::NotifyDied()
 {
-    ++m_dockedCount;
+    if (m_inFormationCount > 0)
+        --m_inFormationCount;
+    --m_aliveEnemyCount;
+
+    if (!m_started)
+        ++m_dockedCount;
+
+    if (m_aliveEnemyCount <= 0)
+        EventManager::GetInstance().SendEvent(EVENT_WAVE_CLEARED);
+}
+
+
+void dae::FormationComponent::NotifyDocked()
+{
+    ++m_dockedCount;       // gates m_started — never decrements
+    ++m_inFormationCount;  // current occupancy — can go down during dives
+}
+
+void dae::FormationComponent::NotifyUndocked()
+{
+    // Don't touch m_dockedCount — the start gate must never revert.
+    if (m_inFormationCount > 0)
+        --m_inFormationCount;
+}
+
+void dae::FormationComponent::HandleEvent(const Event* pEvent)
+{
+    switch (pEvent->id)
+    {
+    case EVENT_PLAYER_TOOK_DAMAGE:
+		m_waitingForRegroup = true;
+        break;
+    }
 }

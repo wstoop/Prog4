@@ -15,7 +15,7 @@ namespace dae
         { --m_Lives;
             EventManager::GetInstance().SendEvent(
             std::make_unique<DataEvent<LostLifeEvent>>(
-                PLAYER_LOST_LIFE,
+                DATEVENT_PLAYER_LOST_LIFE,
                 LostLifeEvent{ GetOwner()}
             )
         );

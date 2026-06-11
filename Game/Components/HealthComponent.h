@@ -13,6 +13,7 @@ namespace dae
 
         HealthComponent(GameObject* owner, float maxHealth);
         void HandleEvent(const Event* pEvent) override;
+		void Update() override;
 
         void TakeDamage(float amount);
         void Revive();
@@ -25,11 +26,15 @@ namespace dae
         bool  IsDead() const { return m_IsDead; }
 
     private:
+        void CalculateDamage(const Event* pEvent);
         float m_MaxHealth;
         float m_CurrentHealth;
         bool  m_IsDead{ false };
 
         DeathCallback m_OnDeath;
         DamageFilter  m_Filter;
+
+        float m_InvincibilityTimer{ 0.f };
+        static constexpr float k_InvincibilityDuration{ 1.5f };
     };
 }

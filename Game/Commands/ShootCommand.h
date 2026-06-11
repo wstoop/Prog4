@@ -2,18 +2,21 @@
 #include "Commands/Command.h"
 #include "GameObject.h"
 #include "Components/ShootComponent.h"
+#include "TimeManager.h"
 
 class ShootCommand : public GameObjectCommand
 {
     
     dae::ShootComponent* m_shootComponent;
 	dae::GameObject* m_target;
+
 public:
     ShootCommand(dae::GameObject* gameObject)
         : GameObjectCommand(gameObject)
     {
         m_shootComponent = gameObject->GetComponent<dae::ShootComponent>();
         m_target = gameObject;
+
     }
 
     void Execute() override

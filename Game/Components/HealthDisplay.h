@@ -14,12 +14,12 @@ namespace dae
             : Component(owner),
             m_target(target)
         {
-            EventManager::GetInstance().AttachEvent(PLAYER_LOST_LIFE, this);
+            EventManager::GetInstance().AttachEvent(DATEVENT_PLAYER_LOST_LIFE, this);
         }
 
         void HandleEvent(const Event* pEvent) override
         {
-            if (pEvent->id != PLAYER_LOST_LIFE) return;
+            if (pEvent->id != DATEVENT_PLAYER_LOST_LIFE) return;
 
             const auto* e = static_cast<const DataEvent<LostLifeEvent>*>(pEvent);
             if (e->data.target != m_target) return;

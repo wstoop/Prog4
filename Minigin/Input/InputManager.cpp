@@ -52,7 +52,7 @@ namespace dae
         std::map<ControllerBindKey, std::unique_ptr<Command>>     m_controllerCommands;
         std::map<ThumbstickBindKey, std::unique_ptr<AxisCommand>> m_thumbstickCommands;
         std::map<KeyboardBindKey, std::unique_ptr<Command>>     m_keyboardCommands;
-        std::map<KeyboardAxis, std::unique_ptr<AxisCommand>> m_keyboardAxisCommands;
+        std::map<std::pair<KeyboardAxis, KeyState>, std::unique_ptr<AxisCommand>> m_keyboardAxisCommands;
 
         void ScanControllers()
         {
@@ -83,11 +83,41 @@ namespace dae
                 if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP)
                 {
                     if (e.key.repeat) continue;
+
                     KeyState state = (e.type == SDL_EVENT_KEY_DOWN) ? KeyState::Down : KeyState::Up;
-                    KeyboardBindKey key{ static_cast<int>(e.key.scancode), state };
+                    int scancode = static_cast<int>(e.key.scancode);
+
+                    // 1. Fire traditional single-key actions (e.g., Spacebar to select)
+                    KeyboardBindKey key{ scancode, state };
                     auto it = m_keyboardCommands.find(key);
                     if (it != m_keyboardCommands.end())
                         it->second->Execute();
+
+                    // 2. NEW: Look up and fire Axis actions bound to discrete states (Down / Up)
+                    for (const auto& [axisPair, command] : m_keyboardAxisCommands)
+                    {
+                        const KeyboardAxis& axis = axisPair.first;
+                        KeyState boundState = axisPair.second;
+
+                        // Only evaluate this axis if its registered state matches the event state
+                        if (boundState == state)
+                        {
+                            glm::vec2 dir{ 0.f, 0.f };
+                            bool axisKeyTriggered = false;
+
+                            // Evaluate which direction key matched the event's scancode
+                            if (scancode == axis.scancodeRight) { dir.x += 1.f; axisKeyTriggered = true; }
+                            if (scancode == axis.scancodeLeft) { dir.x -= 1.f; axisKeyTriggered = true; }
+                            if (scancode == axis.scancodeUp) { dir.y += 1.f; axisKeyTriggered = true; }
+                            if (scancode == axis.scancodeDown) { dir.y -= 1.f; axisKeyTriggered = true; }
+
+                            // Only fire if this specific axis was the one interacted with
+                            if (axisKeyTriggered)
+                            {
+                                command->Execute(dir);
+                            }
+                        }
+                    }
                 }
 
                 ImGui_ImplSDL3_ProcessEvent(&e);
@@ -121,15 +151,23 @@ namespace dae
                     command->Execute();
             }
 
-            // Keyboard axis (WASD / arrows)
-            for (const auto& [axis, command] : m_keyboardAxisCommands)
+            // 3. UPDATED: Process continuous Keyboard Axis states (Pressed state only)
+            for (const auto& [axisPair, command] : m_keyboardAxisCommands)
             {
-                glm::vec2 dir{ 0.f, 0.f };
-                if (kb[axis.scancodeRight]) dir.x += 1.f;
-                if (kb[axis.scancodeLeft])  dir.x -= 1.f;
-                if (kb[axis.scancodeUp])    dir.y += 1.f;
-                if (kb[axis.scancodeDown])  dir.y -= 1.f;
-                command->Execute(dir);
+                const KeyboardAxis& axis = axisPair.first;
+                KeyState boundState = axisPair.second;
+
+                // Continuous axis monitoring should ONLY process commands bound to KeyState::Pressed
+                if (boundState == KeyState::Pressed)
+                {
+                    glm::vec2 dir{ 0.f, 0.f };
+                    if (kb[axis.scancodeRight]) dir.x += 1.f;
+                    if (kb[axis.scancodeLeft])  dir.x -= 1.f;
+                    if (kb[axis.scancodeUp])    dir.y += 1.f;
+                    if (kb[axis.scancodeDown])  dir.y -= 1.f;
+
+                    command->Execute(dir);
+                }
             }
 
             // Thumbsticks and DPad
@@ -217,14 +255,14 @@ namespace dae
         m_impl->m_keyboardCommands.erase({ scancode, state });
     }
 
-    void InputManager::BindCommand(KeyboardAxis axis, std::unique_ptr<AxisCommand> command)
+    void InputManager::BindCommand(KeyboardAxis axis, KeyState state, std::unique_ptr<AxisCommand> command)
     {
-        m_impl->m_keyboardAxisCommands[axis] = std::move(command);
+        m_impl->m_keyboardAxisCommands[{ axis, state }] = std::move(command);
     }
 
-    void InputManager::UnbindCommand(KeyboardAxis axis)
+    void InputManager::UnbindCommand(KeyboardAxis axis, KeyState state)
     {
-        m_impl->m_keyboardAxisCommands.erase(axis);
+        m_impl->m_keyboardAxisCommands.erase({ axis, state });
     }
 
     bool InputManager::ProcessInput()

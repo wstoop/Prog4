@@ -1,0 +1,31 @@
+{
+    "waves": [
+        {
+            "grid": [
+                "...GGGG...",
+                "..WWWWWW..",
+                "..WWWWWW..",
+                ".BBBBBBBB.",
+                ".BBBBBBBB."
+            ]
+        },
+        {
+            "grid": [
+                "..GGGGGG..",
+                "..BWBWBW..",
+                "..WBWBWB..",
+                ".WBWBWBWB.",
+                ".BBBBBBBB."
+            ]
+        },
+        {
+            "grid": [
+                ".GGGGGGGG.",
+                ".WWWWWWWW.",
+                ".BBBBBBBB.",
+                ".WWWWWWWW.",
+                ".BBBBBBBB."
+            ]
+        }
+    ]
+}

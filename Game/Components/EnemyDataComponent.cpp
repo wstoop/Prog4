@@ -7,12 +7,22 @@
 
 void dae::EnemyDataComponent::HandleEvent(const Event* pEvent)
 {
-    if (m_hit) return;
-
     const auto* e = static_cast<const DataEvent<OverlapEvent>*>(pEvent);
-    if (e->data.self != GetOwner()) return;
-    if (e->data.other->tag != "Bullet") return;
+    switch (pEvent->id)
+    {
+	case DATEVENT_ACTOR_OVERLAPPED:
+        if (e->data.self != GetOwner()) return;
+        if (e->data.other->tag != "Bullet") return;
 
-    m_hit = true;
-    GetOwner()->GetComponent<AnimationComponent>()->SetRow(1);
+        m_hit = true;
+        GetOwner()->GetComponent<AnimationComponent>()->SetRow(1);
+		break;
+	case EVENT_PLAYER_TOOK_DAMAGE:
+		m_playerAlive = false;
+		break;
+
+    case EVENT_ALL_ENEMIES_RETURNED:
+		m_playerAlive = true;
+		break;
+    }
 }

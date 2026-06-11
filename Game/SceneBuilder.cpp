@@ -10,8 +10,7 @@
 #include "Components/TextComponent.h"
 #include "Components/TextureComponent.h"
 #include "Components/FormationComponent.h"
-#include "Components/EnemyEntryComponent.h"
-#include "Components/EntryQueueComponent.h"
+
 #include "Components/ScrollBackgroundComponent.h"
 #include "Components/HealthComponent.h"
 #include "Components/ShootComponent.h"
@@ -23,12 +22,16 @@
 #include "Components/LivesComponent.h"
 #include "Components/HealthDisplay.h"
 #include "Components/PoolComponent.h"
+#include "Components/SelectableButtonComponent.h"
+#include "Components/WaveManager.h"
+#include "States/Enemies/EnemyBrainComponent.h"
 
 #include "Input/InputManager.h"
 #include "Commands/MoveCommand.h"
 #include "Commands/ShootCommand.h"
 #include "Commands/KillCommand.h"
-
+#include "Commands/UIMoveCommand.h"
+#include "Commands/UIConfirmCommand.h"
 #include <limits>
 #include <cassert>
 #include <SDL3/SDL.h>
@@ -52,7 +55,7 @@ static void BindPlayer(const SceneInputBinding::PlayerBinding& pb)
     switch (cfg.inputType)
     {
     case PlayerInputType::Keyboard:
-        input.BindCommand(k_WASDAxis,
+        input.BindCommand(k_WASDAxis, dae::KeyState::Pressed,
             std::make_unique<MoveCommand>(player, cfg.speed));
         input.BindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down,
             std::make_unique<ShootCommand>(player));
@@ -83,6 +86,9 @@ static void BindPlayer(const SceneInputBinding::PlayerBinding& pb)
         input.BindCommand(ctrlID, dae::ControllerButton::ButtonX, dae::KeyState::Down,
             std::make_unique<KillCommand>(player));
     }
+
+    //input.BindCommand(SDL_SCANCODE_ESCAPE, dae::KeyState::Down,
+    //    std::make_unique<dae::PauseGameCommand>());
 }
 
 static void UnbindPlayer(const SceneInputBinding::PlayerBinding& pb)
@@ -94,7 +100,7 @@ static void UnbindPlayer(const SceneInputBinding::PlayerBinding& pb)
     switch (cfg.inputType)
     {
     case PlayerInputType::Keyboard:
-        input.UnbindCommand(k_WASDAxis);
+        input.UnbindCommand(k_WASDAxis, dae::KeyState::Pressed);
         input.UnbindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down);
         break;
 
@@ -117,6 +123,8 @@ static void UnbindPlayer(const SceneInputBinding::PlayerBinding& pb)
     {
         input.UnbindCommand(ctrlID, dae::ControllerButton::ButtonX, dae::KeyState::Down);
     }
+
+    //input.UnbindCommand(SDL_SCANCODE_ESCAPE, dae::KeyState::Down);
 }
 
 
@@ -129,25 +137,31 @@ void SceneInputBinding::Bind()
 
         BindPlayer(pb);
     }
+    for (auto& fn : onBind) fn();
 }
 
 void SceneInputBinding::Unbind()
 {
     for (const auto& pb : players)
         UnbindPlayer(pb);
+
+    for (auto& fn : onUnbind) fn();
 }
 
 void SceneInputBinding::SwitchFrom(SceneInputBinding& previous)
 {
     previous.Unbind();
     Bind();
+
+    std::for_each(players.begin(), players.end(), [this](PlayerBinding& pb) {
+        pb.config.lives = 3;
+		});
 }
 
 
 SceneBuilder::SceneBuilder(const std::string& sceneName)
     : m_sceneName(sceneName)
-{
-}
+{}
 
 SceneBuilder& SceneBuilder::WithBackground(const std::string& textureFile,
     float screenW, float screenH)
@@ -183,9 +197,10 @@ BuildResult SceneBuilder::Build()
     auto& scene = dae::SceneManager::GetInstance().CreateScene(m_sceneName);
 
     if (m_hasBackground) SpawnBackground(scene);
-    if (m_hasEnemies)    SpawnEnemies(scene);
 
     BuildResult result;
+    bool hasPlayer = false;
+    result.menuStartingButton = m_pMenuStartingButton;
 
     for (size_t i = 0; i < m_players.size(); ++i)
     {
@@ -196,6 +211,15 @@ BuildResult SceneBuilder::Build()
 
         SceneInputBinding::PlayerBinding pb{ ptr, cfg, UINT32_MAX };
         result.inputBinding.players.push_back(pb);
+
+        hasPlayer = true;
+    }
+
+    if (hasPlayer)
+    {
+        auto poolGO = std::make_unique<dae::GameObject>();
+        poolGO->AddComponent<dae::PoolComponent>();
+        scene.Add(std::move(poolGO));
     }
 
     for (int idx : m_hudPlayerIndices)
@@ -204,6 +228,23 @@ BuildResult SceneBuilder::Build()
         SpawnHUD(scene, result.playerPtrs[idx], idx);
     }
 
+    if (m_hasMenuButtons)
+    {
+        SpawnMenuButtons(scene, result.inputBinding);
+    }
+    if (m_hasNextButton)
+    {
+        SpawnNextButton(scene, result.inputBinding);
+    }
+    if (m_hasEnemies)
+    {
+        auto waveManagerGO = std::make_unique<dae::GameObject>();
+        waveManagerGO->AddComponent<dae::WaveManager>(scene, "waves.json");
+        auto* waveManager = waveManagerGO->GetComponent<dae::WaveManager>();
+        scene.Add(std::move(waveManagerGO));
+
+        waveManager->StartFirstWave();
+    }
     return result;
 }
 
@@ -245,8 +286,9 @@ void SceneBuilder::SpawnEnemies(dae::Scene& scene) const
     auto* formationComp = formationPtr->GetComponent<dae::FormationComponent>();
 
     int enemyCount = 0;
-    std::vector<std::vector<dae::EnemyEntryComponent*>> enemiesByCol(formationData[0].size());
+    const int totalCols = static_cast<int>(formationData[0].size());
 
+    // Compute formation center for sway offset calculations
     glm::vec3 formationCenter{};
     {
         glm::vec3 sum{};
@@ -268,6 +310,18 @@ void SceneBuilder::SpawnEnemies(dae::Scene& scene) const
         }
     }
 
+    // Determine entry direction per column (mirrors original EntryQueueComponent logic)
+    std::vector<bool> colFromLeft(totalCols, true);
+    {
+        bool enterFromLeft = false;
+        for (int i = 0; i < totalCols / 2; ++i)
+        {
+            colFromLeft[i] = enterFromLeft;
+            colFromLeft[totalCols - 1 - i] = !enterFromLeft;
+            enterFromLeft = !enterFromLeft;
+        }
+    }
+
     for (size_t row = 0; row < formationData.size(); ++row)
     {
         for (size_t col = 0; col < formationData[row].size(); ++col)
@@ -280,6 +334,7 @@ void SceneBuilder::SpawnEnemies(dae::Scene& scene) const
 
             enemy->tag = "Enemy";
             auto* transform = enemy->GetComponent<dae::TransformComponent>();
+            transform->SetScale({ 3.f, 3.f, 0.f });
 
             glm::vec3 localTarget{
                 static_cast<float>(col) * spacingX,
@@ -291,41 +346,21 @@ void SceneBuilder::SpawnEnemies(dae::Scene& scene) const
                 formationPtr->GetComponent<dae::TransformComponent>()->GetLocalPosition().y + localTarget.y,
                 0.f
             };
-            transform->SetScale({ 3.f, 3.f, 0.f });
 
             const float delay = 0.05f * static_cast<float>(row);
-            enemy->AddComponent<dae::EnemyEntryComponent>(
-                formationPtr, transform, worldTarget, 2.0f, delay);
+            const bool  fromLeft = colFromLeft[col];
+
             enemy->AddComponent<dae::EnemyFormationSlotComponent>(
                 formationComp, localTarget, formationCenter);
 
-            enemiesByCol[col].push_back(enemy->GetComponent<dae::EnemyEntryComponent>());
+            auto* brain = enemy->AddComponent<dae::EnemyBrainComponent>();
+            brain->SetEntryConfig(worldTarget, 2.0f, delay, fromLeft, formationPtr);
+
             ++enemyCount;
             scene.Add(std::move(enemy));
         }
     }
 
-    std::vector<dae::EntryBatch> entryBatches;
-    const int totalCols = static_cast<int>(formationData[0].size());
-    bool enterFromLeft = false;
-    for (int i = 0; i < totalCols / 2; ++i)
-    {
-        dae::EntryBatch batch;
-        for (auto* entry : enemiesByCol[i])
-        {
-            entry->SetEntryDirection(enterFromLeft);
-            batch.enemies.push_back(entry);
-        }
-        for (auto* entry : enemiesByCol[totalCols - 1 - i])
-        {
-            entry->SetEntryDirection(!enterFromLeft);
-            batch.enemies.push_back(entry);
-        }
-        entryBatches.push_back(batch);
-        enterFromLeft = !enterFromLeft;
-    }
-
-    formationMover->AddComponent<dae::EntryQueueComponent>(std::move(entryBatches));
     formationMover->GetComponent<dae::FormationComponent>()->SetAllEnemies(enemyCount);
     scene.Add(std::move(formationMover));
 }
@@ -354,7 +389,7 @@ dae::GameObject* SceneBuilder::SpawnPlayer(dae::Scene& scene,
             lives->LoseLife();
             if (lives->IsGameOver())
             {
-                EventManager::GetInstance().SendEvent(GAME_OVER);
+                EventManager::GetInstance().SendEvent(EVENT_GAME_OVER);
                 return;
             }
             self->GetComponent<dae::TransformComponent>()->SetLocalPosition({ 300.f, 700.f, 0.f });
@@ -393,12 +428,6 @@ void SceneBuilder::SpawnHUD(dae::Scene& scene, dae::GameObject* playerPtr, int p
 
     if (playerIndex == 0)
     {
-        AddLabel("P1: WASD to move / Space to shoot", white, { 30, 30, 0 });
-        AddLabel("P2: DPAD to move / A to shoot", white, { 30, 60, 0 });
-        AddLabel("Shooting enemies has sounds", white, { 30, 110, 0 });
-        AddLabel("press X (kb and ctrlr respectfullly) to die", white, { 30, 160, 0 });
-        AddLabel("(can also die by contact with enemy)", white, { 30, 190, 0 });
-
         AddLabel("HIGH", red, { 650,  75, 0 });
         AddLabel("SCORE", red, { 670,  95, 0 });
         AddLabel("30000", white, { 670, 115, 0 });
@@ -439,4 +468,121 @@ void SceneBuilder::SpawnHUD(dae::Scene& scene, dae::GameObject* playerPtr, int p
         levelIcon->AddComponent<dae::TextureComponent>("levelCounter.png");
         scene.Add(std::move(levelIcon));
     }
+}
+
+SceneBuilder& SceneBuilder::WithMenuButtons()
+{
+    m_hasMenuButtons = true;
+    return *this;
+
+}
+
+SceneBuilder& SceneBuilder::WithNextButton(EventId nextStateEventId)
+{
+    m_hasNextButton = true;
+    m_nextButtonEventId = nextStateEventId;
+    return *this;
+}
+void SceneBuilder::SpawnMenuButtons(dae::Scene& scene, SceneInputBinding& binding)
+{
+    auto font = dae::ResourceManager::GetInstance().LoadFont("ArcadeFontSpecialCharacters.ttf", 36);
+    const SDL_Color white{ 255, 255, 255, 255 };
+
+    auto goSingle = std::make_unique<dae::GameObject>();
+    auto goCoOp = std::make_unique<dae::GameObject>();
+    auto goVersus = std::make_unique<dae::GameObject>();
+
+    goSingle->GetComponent<dae::TransformComponent>()->SetLocalPosition({ 300, 300, 0 });
+    goCoOp->GetComponent<dae::TransformComponent>()->SetLocalPosition({ 300, 360, 0 });
+    goVersus->GetComponent<dae::TransformComponent>()->SetLocalPosition({ 300, 420, 0 });
+
+    goSingle->AddComponent<dae::TextComponent>("Single Player", font, white);
+    goCoOp->AddComponent<dae::TextComponent>("Co-Op", font, white);
+    goVersus->AddComponent<dae::TextComponent>("Versus", font, white);
+
+    // Wire neighbors
+    goSingle->AddComponent<dae::SelectableButtonComponent>(
+        dae::SelectableButtonComponent::ConnectedUIElements{ nullptr, goCoOp.get(), nullptr, nullptr });
+    goCoOp->AddComponent<dae::SelectableButtonComponent>(
+        dae::SelectableButtonComponent::ConnectedUIElements{ goSingle.get(), goVersus.get(), nullptr, nullptr });
+    goVersus->AddComponent<dae::SelectableButtonComponent>(
+        dae::SelectableButtonComponent::ConnectedUIElements{ goCoOp.get(), nullptr, nullptr, nullptr });
+
+    // Select the first one by default
+    goSingle->GetComponent<dae::SelectableButtonComponent>()->Select();
+    m_pMenuStartingButton = goSingle.get();
+
+    goSingle->GetComponent<dae::SelectableButtonComponent>()->SetOnActivate(
+        [] { EventManager::GetInstance().SendEvent(EVENT_LOAD_SINGLE); });
+    goCoOp->GetComponent<dae::SelectableButtonComponent>()->SetOnActivate(
+        [] { EventManager::GetInstance().SendEvent(EVENT_LOAD_COOP); });
+    goVersus->GetComponent<dae::SelectableButtonComponent>()->SetOnActivate(
+        [] { EventManager::GetInstance().SendEvent(EVENT_LOAD_VERSUS); });
+    
+    scene.Add(std::move(goSingle));
+    scene.Add(std::move(goCoOp));
+    scene.Add(std::move(goVersus));
+
+    auto sel = std::make_unique<UISelection>(m_pMenuStartingButton);
+    UISelection* selPtr = sel.get();
+    binding.ownedSelections.push_back(std::move(sel));
+
+    binding.onBind.push_back([selPtr]() {
+        auto& input = dae::InputManager::GetInstance();
+        input.BindCommand(k_WASDAxis, dae::KeyState::Down, std::make_unique<UIMoveCommand>(selPtr));
+        input.BindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down,
+            std::make_unique<UIConfirmCommand>(selPtr));
+        });
+
+    binding.onUnbind.push_back([]() {
+        auto& input = dae::InputManager::GetInstance();
+        input.UnbindCommand(k_WASDAxis, dae::KeyState::Down);
+        input.UnbindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down);
+        });
+}
+void SceneBuilder::SpawnNextButton(dae::Scene& scene, SceneInputBinding& binding)
+{
+    auto font = dae::ResourceManager::GetInstance().LoadFont("ArcadeFontSpecialCharacters.ttf", 28);
+    const SDL_Color white{ 255, 255, 255, 255 };
+
+    auto goNext = std::make_unique<dae::GameObject>();
+    // Positioned near the bottom center of your 600x830 play space
+    goNext->GetComponent<dae::TransformComponent>()->SetLocalPosition({ 160.f, 740.f, 0.f });
+    goNext->AddComponent<dae::TextComponent>("PRESS SHOOT TO CONTINUE", font, white);
+
+    // Wire neighbors (isolated single button node)
+    goNext->AddComponent<dae::SelectableButtonComponent>(
+        dae::SelectableButtonComponent::ConnectedUIElements{ nullptr, nullptr, nullptr, nullptr });
+
+    // Select the button by default (Matches SpawnMenuButtons structure)
+    goNext->GetComponent<dae::SelectableButtonComponent>()->Select();
+
+    // Cache the custom hashed EventId safely for the capture block
+    EventId cachedEventId = m_nextButtonEventId;
+    goNext->GetComponent<dae::SelectableButtonComponent>()->SetOnActivate([cachedEventId]() {
+        EventManager::GetInstance().SendEvent(cachedEventId);
+        });
+
+    dae::GameObject* buttonPtr = goNext.get();
+    scene.Add(std::move(goNext));
+
+    // Register active selection tracking context layout
+    auto sel = std::make_unique<UISelection>(buttonPtr);
+    UISelection* selPtr = sel.get();
+    binding.ownedSelections.push_back(std::move(sel));
+
+    binding.onBind.push_back([selPtr]() {
+        auto& input = dae::InputManager::GetInstance();
+        // Bind axis movement tracking commands (Matches SpawnMenuButtons)
+        input.BindCommand(k_WASDAxis, dae::KeyState::Down, std::make_unique<UIMoveCommand>(selPtr));
+        // Bind selection activation trigger execution command
+        input.BindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down,
+            std::make_unique<UIConfirmCommand>(selPtr));
+        });
+
+    binding.onUnbind.push_back([]() {
+        auto& input = dae::InputManager::GetInstance();
+        input.UnbindCommand(k_WASDAxis, dae::KeyState::Down);
+        input.UnbindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down);
+        });
 }

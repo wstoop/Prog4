@@ -67,3 +67,8 @@ void Scene::PurgeDestroyedObjects()
 	);
 }
 
+void Scene::Reserve(size_t extraCapacity)
+{
+	m_objects.reserve(m_objects.size() + extraCapacity);
+}
+

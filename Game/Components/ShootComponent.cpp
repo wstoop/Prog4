@@ -7,6 +7,10 @@
 #include "Components/BulletComponent.h"
 #include "Sound/ServiceLocator.h"
 #include "../SoundID.h"
+#include "TimeManager.h"
+#include "EventManager.h"
+#include "LivesComponent.h"
+#include "GameEvents.h"
 
 
 namespace dae
@@ -21,6 +25,10 @@ namespace dae
 
     void ShootComponent::Shoot(float dirX, float dirY)
     {
+		if (m_ShootCooldown > 0.f)
+			return;
+
+        m_ShootCooldown = m_ShootDelay;
         ServiceLocator::GetSoundSystem().Play(SOUND_SHOOT, 0.8f);
         GameObject* bullet = BulletPool::GetInstance().GetBullet();
         if (bullet == nullptr) return;
@@ -51,5 +59,14 @@ namespace dae
             pos.x + spriteHalfW - bulletHalfW,
             pos.y + spriteHalfH - bulletHalfH,
             dirX, dirY, m_speed);
+
+        if(GetOwner()->GetComponent<dae::LivesComponent>() != nullptr)
+		    EventManager::GetInstance().SendEvent(EVENT_PLAYER_SHOT);
+    }
+
+    void ShootComponent::Update()
+    {
+        if (m_ShootCooldown > 0.f)
+            m_ShootCooldown -= dae::TimeManager::GetInstance().GetDeltaTime();
     }
 }

@@ -1,6 +1,6 @@
 #include "EnemyFormationSlotComponent.h"
-#include "Components/TransformComponent.h"
 #include "FormationComponent.h"
+#include "Components/TransformComponent.h"
 #include "GameObject.h"
 
 dae::EnemyFormationSlotComponent::EnemyFormationSlotComponent(
@@ -12,23 +12,20 @@ dae::EnemyFormationSlotComponent::EnemyFormationSlotComponent(
     , m_formation(formation)
     , m_slotLocalPos(slotLocalPos)
     , m_formationCenter(formationCenter)
-{
-    m_transform = owner->GetComponent<TransformComponent>();
-}
-
-void dae::EnemyFormationSlotComponent::Update()
-{
-    if (!m_active) return;
-    if (GetOwner()->m_destroy) return;
-
-    glm::vec3 sway = m_formation->ComputeSwayOffset(m_slotLocalPos, m_formationCenter);
-    m_transform->SetLocalPosition(m_slotLocalPos + sway);
-}
+{}
 
 void dae::EnemyFormationSlotComponent::Activate()
 {
+    if (m_active) return;
     m_active = true;
     m_formation->NotifyDocked();
+}
+
+void dae::EnemyFormationSlotComponent::Deactivate()
+{
+    if (!m_active) return;
+    m_active = false;
+    m_formation->NotifyUndocked();   // ← you'll add this to FormationComponent
 }
 
 void dae::EnemyFormationSlotComponent::NotifyIfDied()
@@ -36,6 +33,20 @@ void dae::EnemyFormationSlotComponent::NotifyIfDied()
     if (m_notifiedDeath) return;
     m_notifiedDeath = true;
     m_formation->NotifyDied();
+}
+
+glm::vec3 dae::EnemyFormationSlotComponent::ComputeSway() const
+{
+    return m_formation->ComputeSwayOffset(m_slotLocalPos, m_formationCenter);
+}
+
+glm::vec3 dae::EnemyFormationSlotComponent::GetSlotWorldPos() const
+{
+    // Formation parent world pos + this slot's local offset (+ current sway)
+    auto* formationTransform = m_formation->GetOwner()->GetComponent<TransformComponent>();
+    return formationTransform->GetWorldPosition() + m_slotLocalPos;
+    // Note: intentionally excludes sway — we want the stable slot centre,
+    // not a moving target for the swoop to chase.
 }
 
 dae::EnemyFormationSlotComponent::~EnemyFormationSlotComponent()

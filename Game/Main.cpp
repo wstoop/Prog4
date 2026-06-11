@@ -14,54 +14,12 @@
 #include "Sound/LoggingSoundSystem.h"
 #include "Sound/SDLSoundSystem.h"
 #include "SoundID.h"
+#include "States/Game/GameStateManager.h"
 #include <filesystem>
 namespace fs = std::filesystem;
 
-SceneInputBinding CreateMenuScene()
-{
-    return SceneBuilder("Menu")
-        .WithBackground("Background_Galaga.png")
-        .Build()
-        .inputBinding;
-}
-
-SceneInputBinding CreateSinglePlayerScene()
-{
-    return SceneBuilder("SinglePlayer")
-        .WithBackground("Background_Galaga.png")
-        .WithEnemies()
-        .WithPlayer(PlayerConfig::Keyboard(100.f))
-        .WithHUDForPlayer(0)
-        .Build()
-        .inputBinding;
-}
-
-SceneInputBinding CreateCoOpScene()
-{
-    return SceneBuilder("CoOp")
-        .WithBackground("Background_Galaga.png")
-        .WithEnemies()
-        .WithPlayer(PlayerConfig::Keyboard(100.f, { 200.f, 700.f, 0.f }))
-        .WithPlayer(PlayerConfig::Controller(PlayerInputType::DPad, 200.f, { 400.f, 700.f, 0.f }))
-        .WithHUDForPlayer(0)
-        .WithHUDForPlayer(1)
-        .Build()
-        .inputBinding;
-}
-
-SceneInputBinding CreateVersusScene()
-{
-    return SceneBuilder("Versus")
-        .WithBackground("Background_Galaga.png")
-        .WithEnemies()
-        .WithPlayer(PlayerConfig::Controller(PlayerInputType::Thumbstick, 100.f))
-        .Build()
-        .inputBinding;
-}
-
 static void load()
 {
-
 #ifdef _DEBUG
     dae::ServiceLocator::RegisterSoundSystem(
         std::make_unique<dae::LoggingSoundSystem>(
@@ -77,17 +35,7 @@ static void load()
     ss.RegisterSound(SOUND_BOSS_HIT_1, "Boss_Hit_Once.mp3");
     ss.RegisterSound(SOUND_BOSS_HIT_2, "Boss_Hit_Twice.mp3");
 
-    auto menuBinding = CreateMenuScene();
-    auto singleBinding = CreateSinglePlayerScene();
-    auto coopBinding = CreateCoOpScene();
-    auto versusBinding = CreateVersusScene();
-
-    coopBinding.SwitchFrom(singleBinding);
-    dae::SceneManager::GetInstance().SetActiveScene("CoOp");
-
-    auto poolGO = std::make_unique<dae::GameObject>();
-    poolGO->AddComponent<dae::PoolComponent>();
-    dae::SceneManager::GetInstance().GetActiveScene()->Add(std::move(poolGO));
+    static dae::GameStateManager gameStateManager;
 }
 
 int main(int, char*[]) {

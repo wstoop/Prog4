@@ -9,27 +9,27 @@ namespace dae
 
     class EnemyFormationSlotComponent final : public Component
     {
-        TransformComponent* m_transform{ nullptr };
         FormationComponent* m_formation{ nullptr };
-
         glm::vec3 m_slotLocalPos{};
         glm::vec3 m_formationCenter{};
-
-        bool m_active{ false };
         bool m_notifiedDeath{ false };
+        bool m_active{ false };          // ← track docked state
 
     public:
         EnemyFormationSlotComponent(GameObject* owner,
             FormationComponent* formation,
             const glm::vec3& slotLocalPos,
             const glm::vec3& formationCenter);
-		~EnemyFormationSlotComponent() override;
-        void Update() override;
+        ~EnemyFormationSlotComponent() override;
 
-        // Called by EnemyEntryComponent once the entry animation finishes
         void Activate();
+        void Deactivate();               // ← new: call on dive start
 
-        // Called by EnemyEntryComponent when the owner dies before docking
         void NotifyIfDied();
+
+        glm::vec3 ComputeSway() const;
+        const glm::vec3& GetSlotLocalPos()  const { return m_slotLocalPos; }
+        glm::vec3        GetSlotWorldPos()  const; // ← new: used by BeeSwoopState
+        bool             IsActive()         const { return m_active; }
     };
 }

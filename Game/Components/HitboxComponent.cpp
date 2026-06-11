@@ -62,7 +62,7 @@ namespace dae
 
             EventManager::GetInstance().SendEvent(
                 std::make_unique<DataEvent<OverlapEvent>>(
-                    ACTOR_OVERLAPPED,
+                    DATEVENT_ACTOR_OVERLAPPED,
                     OverlapEvent{ GetOwner(), other->GetOwner() }
                 )
             );

@@ -5,13 +5,13 @@
 #include <memory>
 #include <functional>
 #include <glm/glm.hpp>
+#include "Commands/UISelection.h"
+#include "Components/GameEvents.h"
 #include "Input/InputManager.h"
 
 namespace dae { class Scene; class GameObject; }
-
 //Input types
 enum class PlayerInputType { Keyboard, Thumbstick, DPad };
-
 //Geenral player stats
 struct PlayerConfig
 {
@@ -43,6 +43,10 @@ struct SceneInputBinding
     };
 
     std::vector<PlayerBinding> players;
+    std::vector<std::unique_ptr<UISelection>> ownedSelections;
+
+    std::vector<std::function<void()>> onBind;
+    std::vector<std::function<void()>> onUnbind;
 
     // Bind the commands in this scene
     void Bind();
@@ -59,6 +63,7 @@ struct BuildResult
 {
     std::vector<dae::GameObject*> playerPtrs;
     SceneInputBinding inputBinding;
+    dae::GameObject* menuStartingButton{ nullptr };
 };
 
 
@@ -74,8 +79,9 @@ public:
     SceneBuilder& WithEnemies(const std::string& formationFile = "formation1.txt");
     SceneBuilder& WithPlayer(const PlayerConfig& cfg);
     SceneBuilder& WithHUDForPlayer(int playerIndex);
+    SceneBuilder& WithMenuButtons();
+    SceneBuilder& WithNextButton(EventId nextStateEventId);
 
-    //called at the end to build the scene
     BuildResult Build();
     static void ActivateSceneWithPools(const std::string& sceneName);
 private:
@@ -83,9 +89,11 @@ private:
     void SpawnBackground(dae::Scene& scene) const;
     void SpawnEnemies(dae::Scene& scene) const;
     dae::GameObject* SpawnPlayer(dae::Scene& scene, const PlayerConfig& cfg) const;
+    void SpawnMenuButtons(dae::Scene& scene, SceneInputBinding& binding);
     void SpawnHUD(dae::Scene& scene, dae::GameObject* playerPtr, int playerIndex) const;
 
-    //Member variables set using WithBlablabla()
+    void SpawnNextButton(dae::Scene& scene, SceneInputBinding& binding);
+
     std::string m_sceneName;
     std::string m_backgroundFile;
     float m_screenW = 600.f;
@@ -95,4 +103,9 @@ private:
     std::string m_formationFile = "formation1.txt";
     std::vector<PlayerConfig> m_players;
     std::vector<int> m_hudPlayerIndices;
+
+    bool m_hasMenuButtons = false;
+    bool m_hasNextButton = false;
+    EventId m_nextButtonEventId = 0;
+    dae::GameObject* m_pMenuStartingButton{ nullptr };
 };

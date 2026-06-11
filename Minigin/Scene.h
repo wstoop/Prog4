@@ -19,6 +19,7 @@ namespace dae
 
 		void Render() const;
 
+		void Reserve(size_t extraCapacity);
 		std::string GetName() const { return m_name; }
 
 		~Scene() = default;
