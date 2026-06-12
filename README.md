@@ -54,7 +54,7 @@ The game is fully playable using either a Keyboard or a Controller.
 | Action | Keyboard | Controller |
 | :--- | :--- | :--- |
 | Movement | `W` `A` `S` `D` | D-Pad / Left Thumbstick |
-| Shoot** | `Spacebar` | `A` Button |
+| Shoot | `Spacebar` | `A` Button |
 
 ### Versus Mode (Boss Control)
 In Versus mode, a second player takes control of a Boss Alien to fight against the classic fighter:
