@@ -3,7 +3,7 @@
 This repository contains my custom 2D C++ game engine and game, created for the Programming 4 course at DAE.  
 It started from the [Minigin](https://github.com/avadae/minigin) template, but the core systems (game objects, components, scene graph, etc.) have been extended, added or replaced to support my design goals.
 
-The project uses **SDL3** for windowing, input and rendering, and **glm** for vector math.
+The project uses SDL3 for windowing, input, sound and rendering, and glm for vector math. xinput is used for controller input.
 
 [![CMake Build](https://github.com/wstoop/Prog4/actions/workflows/cmake.yml/badge.svg)](https://github.com/wstoop/Prog4/actions/workflows/cmake.yml)
 [![Emscripten Build](https://github.com/wstoop/Prog4/actions/workflows/emscripten.yml/badge.svg)](https://github.com/wstoop/Pog4/actions/workflows/emscripten.yml)
