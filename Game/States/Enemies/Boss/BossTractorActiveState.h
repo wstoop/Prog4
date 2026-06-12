@@ -1,6 +1,7 @@
 // States/BossStates/BossTractorActiveState.h
 #pragma once
 #include "../IEnemyState.h"
+#include <glm/glm.hpp>
 
 namespace dae {
 
@@ -23,8 +24,9 @@ namespace dae {
         void OnExit(EnemyBrainComponent& brain) override;
 
         // Called by TractorBeamComponent (or whatever detects the overlap)
-        // when the player fighter enters the beam.
-        void NotifyCaptured() { m_captured = true; }
+        // when the player fighter enters the beam. Records the player's
+        // position so the captured-fighter animation can start from there.
+        void NotifyCaptured(const glm::vec3& playerPos) { m_captured = true; m_capturedPos = playerPos; }
 
     private:
         void ReturnToFormation(EnemyBrainComponent& brain);
@@ -32,6 +34,7 @@ namespace dae {
         float m_beamDuration{ 4.f };  // seconds beam stays open
         float m_elapsed{ 0.f };
         bool  m_captured{ false };
+        glm::vec3 m_capturedPos{};
     };
 
 }

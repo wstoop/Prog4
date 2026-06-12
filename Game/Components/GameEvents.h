@@ -1,16 +1,22 @@
 #pragma once
 #include "EventManager.h"
+#include <glm/glm.hpp>
 
 namespace dae { class GameObject; }
 
 struct ScoreEvent { dae::GameObject* killer; int points; };
 constexpr EventId DATEVENT_SCORE_CHANGED = make_sdbm_hash("DATEVENT_SCORE_CHANGED");
 
-struct OverlapEvent { dae::GameObject* self; dae::GameObject* other; };
+struct OverlapEvent { dae::GameObject* self; dae::GameObject* other; glm::vec3 otherPos; };
 constexpr EventId DATEVENT_ACTOR_OVERLAPPED = make_sdbm_hash("DATEVENT_ACTOR_OVERLAPPED");
 
 struct LostLifeEvent { dae::GameObject* target; };
 constexpr EventId DATEVENT_PLAYER_LOST_LIFE = make_sdbm_hash("DATEVENT_PLAYER_LOST_LIFE");
+
+struct ActorEvent { dae::GameObject* actor; };
+constexpr EventId DATEVENT_ENEMY_SHOT = make_sdbm_hash("DATEVENT_ENEMY_SHOT");
+
+struct CaptureEvent { dae::GameObject* boss; glm::vec3 startPos; };
 
 constexpr EventId EVENT_GAME_OVER = make_sdbm_hash("EVENT_GAME_OVER");
 constexpr EventId EVENT_LOAD_START = make_sdbm_hash("EVENT_LOAD_START");
@@ -26,3 +32,7 @@ constexpr EventId EVENT_PLAYER_DAMAGED_ENEMY = make_sdbm_hash("EVENT_PLAYER_DAMA
 constexpr EventId EVENT_FIGHTER_CAPTURED = make_sdbm_hash("EVENT_FIGHTER_CAPTURED");
 constexpr EventId EVENT_ALL_ENEMIES_RETURNED = make_sdbm_hash("EVENT_ALL_ENEMIES_RETURNED");
 constexpr EventId EVENT_PLAYER_TOOK_DAMAGE = make_sdbm_hash("EVENT_PLAYER_TOOK_DAMAGE");
+
+// anyPlayerAlive: true if at least one OTHER player is still alive, so
+// enemies shouldn't pause their attacks while this player respawns.
+struct PlayerTookDamageEvent { bool anyPlayerAlive; };

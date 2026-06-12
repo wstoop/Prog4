@@ -20,6 +20,8 @@ namespace dae {
     //
     class BossCapturingFighterState final : public IEnemyState {
     public:
+        explicit BossCapturingFighterState(const glm::vec3& capturedPlayerPos) : m_capturedPlayerPos(capturedPlayerPos) {}
+
         void OnEnter(EnemyBrainComponent& brain) override;
         void Update(EnemyBrainComponent& brain) override;
         void OnExit(EnemyBrainComponent& brain) override;
@@ -29,6 +31,10 @@ namespace dae {
         float m_pullDuration{ 2.0f };
         float m_elapsed{ 0.f };
         bool  m_docked{ false };
+
+        // Where the player was when they got captured — the evil ship's
+        // spin-up animation starts from here.
+        glm::vec3 m_capturedPlayerPos{};
     };
 
 }

@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <queue>
 #include <unordered_map>
+#include <atomic>
 #include <iostream>
 
 namespace dae
@@ -30,6 +31,7 @@ namespace dae
 
         std::thread m_Thread;
         bool        m_Running{ true };
+        std::atomic<bool> m_Muted{ false };
 
         Impl()
         {
@@ -65,6 +67,9 @@ namespace dae
 
         void Enqueue(sound_id id, float volume)
         {
+            if (m_Muted)
+                return;
+
             std::lock_guard lock(m_Mutex);
             if (!m_Running)
                 return;
@@ -164,6 +169,16 @@ namespace dae
     {
         if (!m_pImpl) return;
         m_pImpl->Enqueue(id, volume);
+    }
+
+    void SDLSoundSystem::SetMuted(bool muted)
+    {
+        if (m_pImpl) m_pImpl->m_Muted = muted;
+    }
+
+    bool SDLSoundSystem::IsMuted() const
+    {
+        return m_pImpl && m_pImpl->m_Muted;
     }
 
     void SDLSoundSystem::RegisterSound(sound_id id, const std::string& path)

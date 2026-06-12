@@ -12,18 +12,22 @@
 #include "Components/FormationComponent.h"
 
 #include "Components/ScrollBackgroundComponent.h"
-#include "Components/HealthComponent.h"
+#include "Components/PlayerHealthComponent.h"
 #include "Components/ShootComponent.h"
 #include "Components/HitboxComponent.h"
 #include "Components/EnemyFormationSlotComponent.h"
 #include "Components/ScoreDisplayComponent.h"
+#include "Components/HighScoreDisplayComponent.h"
+#include "Components/LevelDisplayComponent.h"
 #include "Components/EnemyDataComponent.h"
+#include "Components/TractorBeamComponent.h"
 #include "Components/BulletComponent.h"
 #include "Components/LivesComponent.h"
 #include "Components/HealthDisplay.h"
 #include "Components/PoolComponent.h"
 #include "Components/SelectableButtonComponent.h"
 #include "Components/WaveManager.h"
+#include "Components/CapturedFighterSpawner.h"
 #include "States/Enemies/EnemyBrainComponent.h"
 
 #include "Input/InputManager.h"
@@ -31,9 +35,14 @@
 #include "Commands/ShootCommand.h"
 #include "Commands/KillCommand.h"
 #include "Commands/UIMoveCommand.h"
+#include "Commands/UIMoveButtonCommand.h"
 #include "Commands/UIConfirmCommand.h"
+#include "Commands/BossDiveBombCommand.h"
+#include "Commands/BossTractorBeamCommand.h"
+#include "Components/BossPlayerControlComponent.h"
 #include <limits>
 #include <cassert>
+#include <set>
 #include <SDL3/SDL.h>
 
 
@@ -52,6 +61,15 @@ static void BindPlayer(const SceneInputBinding::PlayerBinding& pb)
     const PlayerConfig& cfg = pb.config;
     const uint32_t ctrlID = pb.controllerID;
 
+    if (pb.controlsBoss)
+    {
+        input.BindCommand(ctrlID, dae::ControllerButton::ButtonA, dae::KeyState::Down,
+            std::make_unique<BossDiveBombCommand>(player));
+        input.BindCommand(ctrlID, dae::ControllerButton::ButtonB, dae::KeyState::Down,
+            std::make_unique<BossTractorBeamCommand>(player));
+        return;
+    }
+
     switch (cfg.inputType)
     {
     case PlayerInputType::Keyboard:
@@ -59,6 +77,14 @@ static void BindPlayer(const SceneInputBinding::PlayerBinding& pb)
             std::make_unique<MoveCommand>(player, cfg.speed));
         input.BindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down,
             std::make_unique<ShootCommand>(player));
+
+        if (ctrlID != UINT32_MAX)
+        {
+            input.BindCommand(ctrlID, dae::Thumbstick::DPad,
+                std::make_unique<MoveCommand>(player, cfg.speed));
+            input.BindCommand(ctrlID, dae::ControllerButton::ButtonA, dae::KeyState::Down,
+                std::make_unique<ShootCommand>(player));
+        }
         break;
 
     case PlayerInputType::Thumbstick:
@@ -81,7 +107,8 @@ static void BindPlayer(const SceneInputBinding::PlayerBinding& pb)
         input.BindCommand(SDL_SCANCODE_X, dae::KeyState::Down,
             std::make_unique<KillCommand>(player));
     }
-    else if (ctrlID != UINT32_MAX)
+
+    if (ctrlID != UINT32_MAX)
     {
         input.BindCommand(ctrlID, dae::ControllerButton::ButtonX, dae::KeyState::Down,
             std::make_unique<KillCommand>(player));
@@ -97,11 +124,24 @@ static void UnbindPlayer(const SceneInputBinding::PlayerBinding& pb)
     const PlayerConfig& cfg = pb.config;
     const uint32_t ctrlID = pb.controllerID;
 
+    if (pb.controlsBoss)
+    {
+        input.UnbindCommand(ctrlID, dae::ControllerButton::ButtonA, dae::KeyState::Down);
+        input.UnbindCommand(ctrlID, dae::ControllerButton::ButtonB, dae::KeyState::Down);
+        return;
+    }
+
     switch (cfg.inputType)
     {
     case PlayerInputType::Keyboard:
         input.UnbindCommand(k_WASDAxis, dae::KeyState::Pressed);
         input.UnbindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down);
+
+        if (ctrlID != UINT32_MAX)
+        {
+            input.UnbindCommand(ctrlID, dae::Thumbstick::DPad);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::ButtonA, dae::KeyState::Down);
+        }
         break;
 
     case PlayerInputType::Thumbstick:
@@ -119,7 +159,8 @@ static void UnbindPlayer(const SceneInputBinding::PlayerBinding& pb)
     {
         input.UnbindCommand(SDL_SCANCODE_X, dae::KeyState::Down);
     }
-    else if (ctrlID != UINT32_MAX)
+
+    if (ctrlID != UINT32_MAX)
     {
         input.UnbindCommand(ctrlID, dae::ControllerButton::ButtonX, dae::KeyState::Down);
     }
@@ -130,13 +171,37 @@ static void UnbindPlayer(const SceneInputBinding::PlayerBinding& pb)
 
 void SceneInputBinding::Bind()
 {
+    // First pass: players that explicitly use a controller claim one.
+    std::set<uint32_t> usedControllers;
     for (auto& pb : players)
     {
-        if (pb.config.inputType != PlayerInputType::Keyboard && pb.controllerID == UINT32_MAX)
-            pb.controllerID = dae::InputManager::GetInstance().AddController();
-
-        BindPlayer(pb);
+        if (pb.config.inputType != PlayerInputType::Keyboard)
+        {
+            if (pb.controllerID == UINT32_MAX)
+                pb.controllerID = dae::InputManager::GetInstance().AddController(usedControllers);
+            if (pb.controllerID != UINT32_MAX)
+                usedControllers.insert(pb.controllerID);
+        }
     }
+
+    // Second pass: keyboard players also get a free controller as a fallback,
+    // so a single keyboard-bound player can play with either device.
+    for (auto& pb : players)
+    {
+        if (pb.config.inputType == PlayerInputType::Keyboard && pb.controllerID == UINT32_MAX)
+        {
+            uint32_t ctrlID = dae::InputManager::GetInstance().AddController(usedControllers);
+            if (ctrlID != UINT32_MAX)
+            {
+                pb.controllerID = ctrlID;
+                usedControllers.insert(ctrlID);
+            }
+        }
+    }
+
+    for (auto& pb : players)
+        BindPlayer(pb);
+
     for (auto& fn : onBind) fn();
 }
 
@@ -177,6 +242,12 @@ SceneBuilder& SceneBuilder::WithEnemies(const std::string& formationFile)
 {
     m_formationFile = formationFile;
     m_hasEnemies = true;
+    return *this;
+}
+
+SceneBuilder& SceneBuilder::WithPlayerControlledBoss()
+{
+    m_playerControlledBoss = true;
     return *this;
 }
 
@@ -222,6 +293,75 @@ BuildResult SceneBuilder::Build()
         scene.Add(std::move(poolGO));
     }
 
+    // Death/respawn handling: a player respawns if they have lives left.
+    // Game over only fires once every player has run out of lives.
+    {
+        const auto allPlayers = result.playerPtrs;
+        for (size_t i = 0; i < allPlayers.size(); ++i)
+        {
+            dae::GameObject* player = allPlayers[i];
+            const glm::vec3 spawnPos = m_players[i].spawnPos;
+
+            player->GetComponent<dae::PlayerHealthComponent>()->RegisterDeathCallback(
+                [allPlayers, spawnPos](dae::GameObject* owner)
+                {
+                    auto* lives = owner->GetComponent<dae::LivesComponent>();
+                    lives->LoseLife();
+
+                    if (lives->IsGameOver())
+                    {
+                        // All players that died in this batch get their death
+                        // callback fired in turn, so a co-op partner who is
+                        // also dying right now may not have called LoseLife()
+                        // yet. Predict their post-decrement life count instead
+                        // of reading their (possibly stale) current value, so
+                        // the order in which callbacks run doesn't matter.
+                        bool anyoneLeft = false;
+                        for (auto* other : allPlayers)
+                        {
+                            if (other == owner) continue;
+
+                            auto* otherLives = other->GetComponent<dae::LivesComponent>();
+                            int remaining = otherLives->GetLives();
+                            if (other->GetComponent<dae::PlayerHealthComponent>()->IsDead())
+                                --remaining;
+
+                            if (remaining > 0)
+                            {
+                                anyoneLeft = true;
+                                break;
+                            }
+                        }
+
+                        if (!anyoneLeft)
+                            EventManager::GetInstance().SendEvent(EVENT_GAME_OVER);
+
+                        // This player is permanently out (no lives left) but
+                        // their co-op partner is still playing - stay dead
+                        // and off-screen (Die() already moved them) rather
+                        // than reviving into an invisible "ghost" that can
+                        // still move/shoot.
+                        return;
+                    }
+
+                    owner->GetComponent<dae::TransformComponent>()->SetLocalPosition(spawnPos);
+                    owner->GetComponent<dae::PlayerHealthComponent>()->Revive();
+                });
+        }
+    }
+
+    if (m_playerControlledBoss)
+    {
+        SpawnPlayerControlledBoss(scene);
+        result.bossPtr = m_pBossPtr;
+
+        SceneInputBinding::PlayerBinding bossBinding{};
+        bossBinding.playerPtr = m_pBossPtr;
+        bossBinding.config.inputType = PlayerInputType::Thumbstick;
+        bossBinding.controlsBoss = true;
+        result.inputBinding.players.push_back(bossBinding);
+    }
+
     for (int idx : m_hudPlayerIndices)
     {
         assert(idx < static_cast<int>(result.playerPtrs.size()) && "HUD player index out of range");
@@ -244,6 +384,10 @@ BuildResult SceneBuilder::Build()
         scene.Add(std::move(waveManagerGO));
 
         waveManager->StartFirstWave();
+
+        auto capturedFighterSpawnerGO = std::make_unique<dae::GameObject>();
+        capturedFighterSpawnerGO->AddComponent<dae::CapturedFighterSpawner>(scene);
+        scene.Add(std::move(capturedFighterSpawnerGO));
     }
     return result;
 }
@@ -365,6 +509,41 @@ void SceneBuilder::SpawnEnemies(dae::Scene& scene) const
     scene.Add(std::move(formationMover));
 }
 
+void SceneBuilder::SpawnPlayerControlledBoss(dae::Scene& scene) const
+{
+    dae::EnemyFactory::RegisterDefaults();
+
+    const glm::vec3 bossPos{ 270.f, 150.f, 0.f };
+
+    auto formationMover = std::make_unique<dae::GameObject>();
+    formationMover->GetComponent<dae::TransformComponent>()->SetLocalPosition(bossPos);
+    formationMover->AddComponent<dae::FormationComponent>();
+    auto* formationPtr = formationMover.get();
+    auto* formationComp = formationPtr->GetComponent<dae::FormationComponent>();
+    formationComp->SetReportsWaveCleared(false);
+
+    auto boss = dae::EnemyFactory::Create('G');
+    boss->tag = "Enemy";
+    boss->GetComponent<dae::TransformComponent>()->SetScale({ 3.f, 3.f, 0.f });
+
+    boss->AddComponent<dae::EnemyFormationSlotComponent>(
+        formationComp, glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 0.f, 0.f, 0.f });
+
+    auto* brain = boss->AddComponent<dae::EnemyBrainComponent>();
+    brain->SetEntryConfig(bossPos, 2.0f, 0.f, true, formationPtr);
+
+    // Player-controlled: never auto-attacks, attacks are triggered by Player 2.
+    boss->GetComponent<dae::EnemyDataComponent>()->SetCombatStateFactory(nullptr);
+    boss->AddComponent<dae::BossPlayerControlComponent>();
+
+    formationComp->SetAllEnemies(1);
+
+    m_pBossPtr = boss.get();
+
+    scene.Add(std::move(boss));
+    scene.Add(std::move(formationMover));
+}
+
 dae::GameObject* SceneBuilder::SpawnPlayer(dae::Scene& scene,
     const PlayerConfig& cfg) const
 {
@@ -376,26 +555,22 @@ dae::GameObject* SceneBuilder::SpawnPlayer(dae::Scene& scene,
     player->AddComponent<dae::HitboxComponent>(15.f * 3, 16.f * 3);
     player->AddComponent<dae::LivesComponent>(cfg.lives);
 
-    auto* health = player->AddComponent<dae::HealthComponent>(cfg.maxHp);
+    auto* health = player->AddComponent<dae::PlayerHealthComponent>(cfg.maxHp);
     health->SetDamageFilter([](dae::GameObject*, dae::GameObject* other)
         {
             if (other->tag == "Bullet")
                 return other->GetComponent<dae::BulletComponent>()->GetShooter()->tag == "Enemy";
+
+            // A player-controlled boss has a TractorBeamComponent - its body
+            // shouldn't deal collision damage to the player (which would
+            // teleport them away mid-frame and prevent the beam from ever
+            // registering a capture). Only its tractor beam should affect
+            // the player.
+            if (other->tag == "Enemy" && other->GetComponent<dae::TractorBeamComponent>() != nullptr)
+                return false;
+
             return other->tag == "Enemy";
         });
-    health->RegisterDeathCallback([](dae::GameObject* self)
-        {
-            auto* lives = self->GetComponent<dae::LivesComponent>();
-            lives->LoseLife();
-            if (lives->IsGameOver())
-            {
-                EventManager::GetInstance().SendEvent(EVENT_GAME_OVER);
-                return;
-            }
-            self->GetComponent<dae::TransformComponent>()->SetLocalPosition({ 300.f, 700.f, 0.f });
-            self->GetComponent<dae::HealthComponent>()->Revive();
-        });
-
     player->GetComponent<dae::TransformComponent>()->SetLocalPosition(cfg.spawnPos);
     player->GetComponent<dae::TransformComponent>()->SetScale({ 3.f, 3.f, 0.f });
 
@@ -430,7 +605,12 @@ void SceneBuilder::SpawnHUD(dae::Scene& scene, dae::GameObject* playerPtr, int p
     {
         AddLabel("HIGH", red, { 650,  75, 0 });
         AddLabel("SCORE", red, { 670,  95, 0 });
-        AddLabel("30000", white, { 670, 115, 0 });
+
+        auto highScoreGO = std::make_unique<dae::GameObject>();
+        highScoreGO->GetComponent<dae::TransformComponent>()->SetLocalPosition({ 670, 115, 0 });
+        highScoreGO->AddComponent<dae::TextComponent>("0", font, white);
+        highScoreGO->AddComponent<dae::HighScoreDisplayComponent>();
+        scene.Add(std::move(highScoreGO));
     }
 
     const std::string upLabel = std::to_string(playerIndex + 1) + "UP";
@@ -467,6 +647,13 @@ void SceneBuilder::SpawnHUD(dae::Scene& scene, dae::GameObject* playerPtr, int p
         levelIcon->GetComponent<dae::TransformComponent>()->SetScale({ 3, 3, 0 });
         levelIcon->AddComponent<dae::TextureComponent>("levelCounter.png");
         scene.Add(std::move(levelIcon));
+
+        auto levelDisplay = std::make_unique<dae::GameObject>();
+        levelDisplay->GetComponent<dae::TransformComponent>()
+            ->SetLocalPosition({ startX + 40.f, baseY + 60.f * 4 - 10.f, 0 });
+        levelDisplay->AddComponent<dae::TextComponent>("1", font, white);
+        levelDisplay->AddComponent<dae::LevelDisplayComponent>();
+        scene.Add(std::move(levelDisplay));
     }
 }
 
@@ -532,12 +719,37 @@ void SceneBuilder::SpawnMenuButtons(dae::Scene& scene, SceneInputBinding& bindin
         input.BindCommand(k_WASDAxis, dae::KeyState::Down, std::make_unique<UIMoveCommand>(selPtr));
         input.BindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down,
             std::make_unique<UIConfirmCommand>(selPtr));
+
+        uint32_t ctrlID = input.AddController();
+        if (ctrlID != UINT32_MAX)
+        {
+            input.BindCommand(ctrlID, dae::ControllerButton::DpadUp, dae::KeyState::Down,
+                std::make_unique<UIMoveButtonCommand>(selPtr, glm::vec2{ 0.f, 1.f }));
+            input.BindCommand(ctrlID, dae::ControllerButton::DpadDown, dae::KeyState::Down,
+                std::make_unique<UIMoveButtonCommand>(selPtr, glm::vec2{ 0.f, -1.f }));
+            input.BindCommand(ctrlID, dae::ControllerButton::DpadLeft, dae::KeyState::Down,
+                std::make_unique<UIMoveButtonCommand>(selPtr, glm::vec2{ -1.f, 0.f }));
+            input.BindCommand(ctrlID, dae::ControllerButton::DpadRight, dae::KeyState::Down,
+                std::make_unique<UIMoveButtonCommand>(selPtr, glm::vec2{ 1.f, 0.f }));
+            input.BindCommand(ctrlID, dae::ControllerButton::ButtonA, dae::KeyState::Down,
+                std::make_unique<UIConfirmCommand>(selPtr));
+        }
         });
 
     binding.onUnbind.push_back([]() {
         auto& input = dae::InputManager::GetInstance();
         input.UnbindCommand(k_WASDAxis, dae::KeyState::Down);
         input.UnbindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down);
+
+        uint32_t ctrlID = input.AddController();
+        if (ctrlID != UINT32_MAX)
+        {
+            input.UnbindCommand(ctrlID, dae::ControllerButton::DpadUp, dae::KeyState::Down);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::DpadDown, dae::KeyState::Down);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::DpadLeft, dae::KeyState::Down);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::DpadRight, dae::KeyState::Down);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::ButtonA, dae::KeyState::Down);
+        }
         });
 }
 void SceneBuilder::SpawnNextButton(dae::Scene& scene, SceneInputBinding& binding)
@@ -578,11 +790,36 @@ void SceneBuilder::SpawnNextButton(dae::Scene& scene, SceneInputBinding& binding
         // Bind selection activation trigger execution command
         input.BindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down,
             std::make_unique<UIConfirmCommand>(selPtr));
+
+        uint32_t ctrlID = input.AddController();
+        if (ctrlID != UINT32_MAX)
+        {
+            input.BindCommand(ctrlID, dae::ControllerButton::DpadUp, dae::KeyState::Down,
+                std::make_unique<UIMoveButtonCommand>(selPtr, glm::vec2{ 0.f, 1.f }));
+            input.BindCommand(ctrlID, dae::ControllerButton::DpadDown, dae::KeyState::Down,
+                std::make_unique<UIMoveButtonCommand>(selPtr, glm::vec2{ 0.f, -1.f }));
+            input.BindCommand(ctrlID, dae::ControllerButton::DpadLeft, dae::KeyState::Down,
+                std::make_unique<UIMoveButtonCommand>(selPtr, glm::vec2{ -1.f, 0.f }));
+            input.BindCommand(ctrlID, dae::ControllerButton::DpadRight, dae::KeyState::Down,
+                std::make_unique<UIMoveButtonCommand>(selPtr, glm::vec2{ 1.f, 0.f }));
+            input.BindCommand(ctrlID, dae::ControllerButton::ButtonA, dae::KeyState::Down,
+                std::make_unique<UIConfirmCommand>(selPtr));
+        }
         });
 
     binding.onUnbind.push_back([]() {
         auto& input = dae::InputManager::GetInstance();
         input.UnbindCommand(k_WASDAxis, dae::KeyState::Down);
         input.UnbindCommand(SDL_SCANCODE_SPACE, dae::KeyState::Down);
+
+        uint32_t ctrlID = input.AddController();
+        if (ctrlID != UINT32_MAX)
+        {
+            input.UnbindCommand(ctrlID, dae::ControllerButton::DpadUp, dae::KeyState::Down);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::DpadDown, dae::KeyState::Down);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::DpadLeft, dae::KeyState::Down);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::DpadRight, dae::KeyState::Down);
+            input.UnbindCommand(ctrlID, dae::ControllerButton::ButtonA, dae::KeyState::Down);
+        }
         });
 }

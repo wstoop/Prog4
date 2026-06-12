@@ -10,6 +10,7 @@
 namespace dae
 {
     class IEnemyState;
+    class GameObject;
 
     using CombatStateFactory = std::function<std::unique_ptr<IEnemyState>()>;
 
@@ -21,11 +22,13 @@ namespace dae
 
 		bool m_playerAlive{ true };
 
+        GameObject* m_evilShip{ nullptr };
+
         sound_id m_hitSound{ SOUND_ENEMY_HIT };
         sound_id m_bossHit1{ SOUND_BOSS_HIT_1 };
         sound_id m_bossHit2{ SOUND_BOSS_HIT_2 };
 
-        CombatStateFactory m_factory;   // ← was missing from your paste
+        CombatStateFactory m_factory;
 
     public:
         EnemyDataComponent(GameObject* owner, int scoreValue)
@@ -63,5 +66,8 @@ namespace dae
         CombatStateFactory GetCombatStateFactory()                const { return m_factory; }
 
 		bool IsPlayerAlive() const { return m_playerAlive; }
+
+        void SetEvilShip(GameObject* evilShip) { m_evilShip = evilShip; }
+        GameObject* GetEvilShip() const { return m_evilShip; }
     };
 }

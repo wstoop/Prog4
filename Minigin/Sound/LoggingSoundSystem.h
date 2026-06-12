@@ -25,5 +25,13 @@ namespace dae
             m_RealSS->RegisterSound(id, path);
             std::cout << "[Sound] Register id=" << id << " -> " << path << "\n";
         }
+
+        void SetMuted(bool muted) override
+        {
+            m_RealSS->SetMuted(muted);
+            std::cout << "[Sound] Muted=" << muted << "\n";
+        }
+
+        bool IsMuted() const override { return m_RealSS->IsMuted(); }
     };
 }

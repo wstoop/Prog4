@@ -6,6 +6,7 @@
 namespace dae
 {
     class GameStateManager;
+    class NameEntryComponent;
 
     class GameState
     {
@@ -57,6 +58,9 @@ namespace dae
     public:
         explicit EndScreenState(GameStateManager& m);
         void OnEnter(SceneInputBinding& previous) override;
+
+    private:
+        std::vector<dae::GameObject*> m_labels;
     };
 
     class HighScoreState : public GameState
@@ -64,5 +68,16 @@ namespace dae
     public:
         explicit HighScoreState(GameStateManager& m);
         void OnEnter(SceneInputBinding& previous) override;
+
+    private:
+        void RebuildScoreList();
+        void StartNameEntry(int score);
+        void FinishNameEntry();
+
+        std::vector<dae::GameObject*> m_labels;
+        std::vector<dae::GameObject*> m_nameEntryObjects;
+        NameEntryComponent* m_nameEntry{ nullptr };
+        dae::Scene* m_scene{ nullptr };
+        uint32_t m_nameEntryCtrlID{ UINT32_MAX };
     };
 }

@@ -8,14 +8,6 @@
 #include <windows.h>
 #endif
 
-#if USE_STEAMWORKS
-#pragma warning (push)
-#pragma warning (disable:4996)
-#include <steam_api.h>
-#include "Steam/Achievement.h"
-#pragma warning (pop)
-#endif
-
 #include <SDL3/SDL.h>
 //#include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -84,11 +76,6 @@ dae::Minigin::Minigin(const std::filesystem::path& dataPath)
 	dae::GameInfo::GetInstance().SetScreenDimensions(totalWidth, height);
 	dae::GameInfo::GetInstance().SetGameScreenWidth(800 - 150);
 
-#if USE_STEAMWORKS
-	if (!SteamAPI_Init())
-		throw std::runtime_error(std::string("Fatal Error - Steam must be running to play this game (SteamAPI_Init() failed)."));
-	g_SteamAchievements = new CSteamAchievements(g_Achievements, 4);
-#endif
 	g_window = SDL_CreateWindow(
 		"Galaga - Warre Stoop",
 		totalWidth,
@@ -112,12 +99,6 @@ dae::Minigin::~Minigin()
 	SDL_DestroyWindow(g_window);
 	g_window = nullptr;
 	SDL_Quit();
-
-#if USE_STEAMWORKS
-	SteamAPI_Shutdown();
-	g_SteamAchievements = nullptr;
-#endif
-
 }
 
 void dae::Minigin::Run(const std::function<void()>& load)
@@ -137,9 +118,6 @@ void dae::Minigin::RunOneFrame()
 	const auto current_time = std::chrono::high_resolution_clock::now();
 	const float delta_time = std::chrono::duration<float>(current_time - m_lastTime).count();
 	m_quit = !m_input.ProcessInput();
-#if USE_STEAMWORKS
-	SteamAPI_RunCallbacks();
-#endif 
 
 	m_timeManager.SetDeltaTime(delta_time);
 	m_lastTime = current_time;

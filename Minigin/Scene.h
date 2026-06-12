@@ -21,6 +21,7 @@ namespace dae
 
 		void Reserve(size_t extraCapacity);
 		std::string GetName() const { return m_name; }
+		const std::vector<std::unique_ptr<GameObject>>& GetObjects() const { return m_objects; }
 
 		~Scene() = default;
 		Scene(const Scene& other) = delete;

@@ -6,7 +6,10 @@
 #include "Components/EnemyFormationSlotComponent.h"
 #include "GameInfo.h"
 #include "GameObject.h"
+#include "Scene.h"
+#include "SceneManager.h"
 #include "TimeManager.h"
+#include <algorithm>
 #include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
@@ -24,8 +27,25 @@ void dae::BossTractorApproachState::OnEnter(EnemyBrainComponent& brain)
 
     glm::vec3 startPos = transform->GetWorldPosition();
 
-    // Hover at horizontal center, roughly 45 % down the screen
-    m_destination = glm::vec3(sw * 0.5f, sh * 0.45f, 0.f);
+    // Hover above the player's current X position (clamped to stay on screen),
+    // just above the player's flight altitude
+    float destX = sw * 0.5f;
+    if (auto* scene = SceneManager::GetInstance().GetActiveScene())
+    {
+        for (const auto& obj : scene->GetObjects())
+        {
+            if (obj->tag == "Player")
+            {
+                destX = obj->GetComponent<TransformComponent>()->GetWorldPosition().x;
+                break;
+            }
+        }
+    }
+
+    const float margin = 40.f;
+    destX = std::clamp(destX, margin, sw - margin);
+
+    m_destination = glm::vec3(destX, sh * 0.75f, 0.f);
 
     BuildApproachPath(startPos, m_destination);
 

@@ -18,6 +18,9 @@ namespace dae
         float GetOffsetX() const { return m_offsetX; }
         float GetOffsetY() const { return m_offsetY; }
 
+        void SetSize(float width, float height) { m_width = width; m_height = height; }
+        void SetOffset(float offsetX, float offsetY) { m_offsetX = offsetX; m_offsetY = offsetY; }
+
         bool Overlaps(const HitboxComponent* other) const;
 
     private:

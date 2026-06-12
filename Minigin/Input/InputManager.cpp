@@ -4,6 +4,7 @@
 #include "Controller.h"
 #include <map>
 #include <tuple>
+#include <vector>
 
 namespace dae
 {
@@ -46,7 +47,6 @@ namespace dae
 
     struct InputManager::Impl
     {
-        uint32_t m_nextControllerIndex{ 0 };
         std::map<uint32_t, std::unique_ptr<Controller>> m_controllers;
 
         std::map<ControllerBindKey, std::unique_ptr<Command>>     m_controllerCommands;
@@ -126,7 +126,12 @@ namespace dae
             for (auto& [index, controller] : m_controllers)
                 controller->Update();
 
-            // Controller button commands
+            // Controller button commands.
+            // Collect the commands to fire first, then execute them after the
+            // iteration completes - a command's Execute() may itself call
+            // Bind/UnbindCommand (e.g. confirming name entry), which would
+            // otherwise erase the very map node being iterated and crash.
+            std::vector<Command*> controllerCommandsToFire;
             for (const auto& [key, command] : m_controllerCommands)
             {
                 auto it = m_controllers.find(key.controllerIndex);
@@ -135,23 +140,31 @@ namespace dae
                 auto& ctrl = *it->second;
                 auto  btn = static_cast<Controller::Button>(static_cast<uint16_t>(key.button));
 
+                bool fire = false;
                 switch (key.state)
                 {
-                case KeyState::Down:    if (ctrl.IsDownThisFrame(btn)) command->Execute(); break;
-                case KeyState::Up:      if (ctrl.IsUpThisFrame(btn))   command->Execute(); break;
-                case KeyState::Pressed: if (ctrl.IsPressed(btn))       command->Execute(); break;
+                case KeyState::Down:    fire = ctrl.IsDownThisFrame(btn); break;
+                case KeyState::Up:      fire = ctrl.IsUpThisFrame(btn);   break;
+                case KeyState::Pressed: fire = ctrl.IsPressed(btn);       break;
                 }
+                if (fire) controllerCommandsToFire.push_back(command.get());
             }
+            for (auto* command : controllerCommandsToFire)
+                command->Execute();
 
             // Keyboard held (Pressed state)
             const auto* kb = SDL_GetKeyboardState(nullptr);
+            std::vector<Command*> keyboardCommandsToFire;
             for (const auto& [key, command] : m_keyboardCommands)
             {
                 if (key.state == KeyState::Pressed && kb[key.scancode])
-                    command->Execute();
+                    keyboardCommandsToFire.push_back(command.get());
             }
+            for (auto* command : keyboardCommandsToFire)
+                command->Execute();
 
             // 3. UPDATED: Process continuous Keyboard Axis states (Pressed state only)
+            std::vector<std::pair<AxisCommand*, glm::vec2>> keyboardAxisCommandsToFire;
             for (const auto& [axisPair, command] : m_keyboardAxisCommands)
             {
                 const KeyboardAxis& axis = axisPair.first;
@@ -166,11 +179,14 @@ namespace dae
                     if (kb[axis.scancodeUp])    dir.y += 1.f;
                     if (kb[axis.scancodeDown])  dir.y -= 1.f;
 
-                    command->Execute(dir);
+                    keyboardAxisCommandsToFire.emplace_back(command.get(), dir);
                 }
             }
+            for (auto& [command, dir] : keyboardAxisCommandsToFire)
+                command->Execute(dir);
 
             // Thumbsticks and DPad
+            std::vector<std::pair<AxisCommand*, glm::vec2>> thumbstickCommandsToFire;
             for (const auto& [key, command] : m_thumbstickCommands)
             {
                 auto it = m_controllers.find(key.controllerIndex);
@@ -184,8 +200,10 @@ namespace dae
                 case Thumbstick::Right: axis = ctrl.GetRightThumbstick(); break;
                 case Thumbstick::DPad:  axis = ctrl.GetDPad();            break;
                 }
-                command->Execute(axis);
+                thumbstickCommandsToFire.emplace_back(command.get(), axis);
             }
+            for (auto& [command, axis] : thumbstickCommandsToFire)
+                command->Execute(axis);
 
             return true;
         }
@@ -201,26 +219,20 @@ namespace dae
     }
     InputManager::~InputManager() = default;
 
-    uint32_t InputManager::AddController()
+    uint32_t InputManager::AddController(const std::set<uint32_t>& exclude)
     {
-        uint32_t index = m_impl->m_nextControllerIndex;
+        // (Re)scan all slots so already-connected controllers are picked up even
+        // if a previous scene never registered them, and reuse any controller
+        // that's already registered and still connected.
+        m_impl->ScanControllers();
 
-        // Only create if it doesn't exist
-        if (m_impl->m_controllers.find(index) == m_impl->m_controllers.end())
+        for (auto& [index, controller] : m_impl->m_controllers)
         {
-            auto pController = std::make_unique<Controller>(index);
-            // Ensure the controller is actually connected before we consider this index "taken"
-            if (pController->IsConnected())
-            {
-                m_impl->m_controllers.emplace(index, std::move(pController));
-                m_impl->m_nextControllerIndex++;
+            if (controller->IsConnected() && exclude.find(index) == exclude.end())
                 return index;
-            }
         }
 
-        // If index 0 wasn't connected, we might need a different strategy 
-        // or simply return the index and let the Controller handle the null-check
-        return index;
+        return UINT32_MAX;
     }
 
     void InputManager::BindCommand(uint32_t controllerIndex, ControllerButton button,

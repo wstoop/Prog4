@@ -98,21 +98,10 @@ void dae::BossDiveBombState::Update(EnemyBrainComponent& brain)
         }
     }
 
-    // Reached the bottom — snap back to formation
+    // Reached the bottom — return to formation via a top-entry loop
     if (progress >= 1.f)
     {
-        auto* formationParent = brain.GetFormationParent();
-        if (formationParent)
-            transform->SetParent(formationParent, false);
-
-        if (auto* slot = owner->GetComponent<EnemyFormationSlotComponent>())
-        {
-            transform->SetLocalPosition(slot->GetSlotLocalPos());
-            slot->Activate();
-        }
-
-        transform->SetRotation(0.f, 0.f, 0.f);
-        brain.TransitionTo(std::make_unique<InFormationState>());
+        brain.ReturnToFormationViaEntry();
     }
 }
 

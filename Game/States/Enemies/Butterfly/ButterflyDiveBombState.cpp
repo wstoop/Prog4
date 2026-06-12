@@ -75,18 +75,7 @@ void dae::ButterflyDiveBombState::Update(EnemyBrainComponent& brain)
     auto* t = owner->GetComponent<TransformComponent>();
     if (data && !data->IsPlayerAlive())
     {
-        auto* formationParent = brain.GetFormationParent();
-        if (formationParent)
-            t->SetParent(formationParent, false);
-
-        if (auto* slot = owner->GetComponent<EnemyFormationSlotComponent>())
-        {
-            t->SetLocalPosition(slot->GetSlotLocalPos());
-            slot->Activate();
-        }
-
-        t->SetRotation(0.f, 0.f, 0.f);
-        brain.TransitionTo(std::make_unique<InFormationState>());
+        brain.ReturnToFormationViaEntry();
         return;
     }
 
@@ -131,19 +120,7 @@ void dae::ButterflyDiveBombState::Update(EnemyBrainComponent& brain)
     }
     if (m_currentWaypointIdx >= m_waypoints.size())
     {
-
-        auto* formationParent = brain.GetFormationParent();
-        if (formationParent)
-            t->SetParent(formationParent, false);
-
-        if (auto* slot = owner->GetComponent<EnemyFormationSlotComponent>())
-        {
-            t->SetLocalPosition(slot->GetSlotLocalPos());
-            slot->Activate();
-        }
-
-        t->SetRotation(0.f, 0.f, 0.f);
-        brain.TransitionTo(std::make_unique<InFormationState>());
+        brain.ReturnToFormationViaEntry();
     }
 }
 

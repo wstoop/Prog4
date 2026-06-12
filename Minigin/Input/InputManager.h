@@ -3,6 +3,7 @@
 #include "../Commands/Command.h"
 #include <memory>
 #include <cstdint>
+#include <set>
 
 namespace dae
 {
@@ -51,7 +52,7 @@ namespace dae
 		InputManager();
 		~InputManager();
 
-		uint32_t AddController();
+		uint32_t AddController(const std::set<uint32_t>& exclude = {});
 
 		// Controller buttons
 		void BindCommand(uint32_t controllerIndex, ControllerButton button, KeyState state,

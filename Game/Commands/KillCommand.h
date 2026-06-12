@@ -1,17 +1,17 @@
 #pragma once
 #include "Commands/Command.h"
-#include "Components/HealthComponent.h"
+#include "Components/PlayerHealthComponent.h"
 #include "GameObject.h"
 
 
 class KillCommand : public GameObjectCommand
 {
-    dae::HealthComponent* healthComp;
+    dae::PlayerHealthComponent* healthComp;
 public:
     KillCommand(dae::GameObject* gameObject)
         : GameObjectCommand(gameObject)
     {
-        healthComp = GetGameObject()->GetComponent<dae::HealthComponent>();
+        healthComp = GetGameObject()->GetComponent<dae::PlayerHealthComponent>();
     }
 
     void Execute() override

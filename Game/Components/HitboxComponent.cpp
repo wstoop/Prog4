@@ -60,10 +60,12 @@ namespace dae
             if (other->GetOwner()->m_destroy) continue;
             if (!Overlaps(other)) continue;
 
+            auto* otherTransform = other->GetOwner()->GetComponent<TransformComponent>();
+
             EventManager::GetInstance().SendEvent(
                 std::make_unique<DataEvent<OverlapEvent>>(
                     DATEVENT_ACTOR_OVERLAPPED,
-                    OverlapEvent{ GetOwner(), other->GetOwner() }
+                    OverlapEvent{ GetOwner(), other->GetOwner(), otherTransform->GetWorldPosition() }
                 )
             );
         }

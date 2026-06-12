@@ -17,6 +17,7 @@ namespace dae
 		~Texture2D();
 
 		glm::vec2 GetSize() const;
+		void SetColorMod(unsigned char r, unsigned char g, unsigned char b);
 
 		Texture2D(const Texture2D &) = delete;
 		Texture2D(Texture2D &&) = delete;

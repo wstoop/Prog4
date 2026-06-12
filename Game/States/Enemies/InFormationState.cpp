@@ -2,6 +2,7 @@
 #include "EnemyBrainComponent.h"
 #include "Components/EnemyDataComponent.h"
 #include "Components/EnemyFormationSlotComponent.h"
+#include "Components/FormationComponent.h"
 #include "Components/TransformComponent.h"
 #include "GameObject.h"
 #include "TimeManager.h"
@@ -36,7 +37,12 @@ void dae::InFormationState::Update(EnemyBrainComponent& brain)
     {
         auto* data = owner->GetComponent<EnemyDataComponent>();
         if (data && data->GetCombatStateFactory() && data->IsPlayerAlive())
-            brain.TransitionTo(data->GetCombatStateFactory()());
+        {
+            if (slot && !slot->GetFormation()->CanStartAttack())
+                m_diveTimer = 0.5f;
+            else
+                brain.TransitionTo(data->GetCombatStateFactory()());
+        }
         else
             m_diveTimer = RandomDiveDelay();
     }

@@ -90,16 +90,16 @@ void dae::FormationComponent::SetAllEnemies(int enemyCount)
     m_aliveEnemyCount = enemyCount;
 }
 
-void dae::FormationComponent::NotifyDied()
+void dae::FormationComponent::NotifyDied(bool wasInFormation)
 {
-    if (m_inFormationCount > 0)
+    if (wasInFormation && m_inFormationCount > 0)
         --m_inFormationCount;
     --m_aliveEnemyCount;
 
     if (!m_started)
         ++m_dockedCount;
 
-    if (m_aliveEnemyCount <= 0)
+    if (m_aliveEnemyCount <= 0 && m_reportsWaveCleared)
         EventManager::GetInstance().SendEvent(EVENT_WAVE_CLEARED);
 }
 

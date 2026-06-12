@@ -31,5 +31,6 @@ namespace dae
         const glm::vec3& GetSlotLocalPos()  const { return m_slotLocalPos; }
         glm::vec3        GetSlotWorldPos()  const; // ← new: used by BeeSwoopState
         bool             IsActive()         const { return m_active; }
+        FormationComponent* GetFormation()  const { return m_formation; }
     };
 }

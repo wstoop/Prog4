@@ -26,33 +26,32 @@ void Scene::RemoveAll()
 
 void Scene::Update()
 {
-	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
-		obj->Update();
-		});
+	// Index-based: a component's Update() may synchronously trigger an event
+	// that adds a new GameObject to this scene (e.g. the captured-fighter
+	// spawner), which can reallocate m_objects and invalidate cached
+	// begin()/end() iterators.
+	for (size_t i = 0; i < m_objects.size(); ++i)
+		m_objects[i]->Update();
 }
 
 void Scene::LateUpdate()
 {
-	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
-		obj->LateUpdate();
-		});
+	for (size_t i = 0; i < m_objects.size(); ++i)
+		m_objects[i]->LateUpdate();
  	EventManager::GetInstance().Update();
 	PurgeDestroyedObjects();
 }
 
 void Scene::FixedUpdate()
 {
-	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
-		obj->FixedUpdate();
-		});
+	for (size_t i = 0; i < m_objects.size(); ++i)
+		m_objects[i]->FixedUpdate();
 }
 
 void Scene::Render() const
 {
-	std::for_each(m_objects.begin(), m_objects.end(), [](const auto& obj) {
-		obj->Render();
-		});
-
+	for (size_t i = 0; i < m_objects.size(); ++i)
+		m_objects[i]->Render();
 }
 
 void Scene::PurgeDestroyedObjects()

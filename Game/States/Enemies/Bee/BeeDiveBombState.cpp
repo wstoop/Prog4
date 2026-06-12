@@ -126,19 +126,7 @@ void dae::BeeDiveBombState::Update(EnemyBrainComponent& brain)
         }
         else
         {
-            auto* formationParent = brain.GetFormationParent();
-            if (formationParent)
-                t->SetParent(formationParent, false);
-            auto* slot = owner->GetComponent<EnemyFormationSlotComponent>();
-
-            if (slot)
-            {
-                t->SetLocalPosition(slot->GetSlotLocalPos());
-                slot->Activate();
-            }
-
-            t->SetRotation(0.f, 0.f, 0.f);
-            brain.TransitionTo(std::make_unique<InFormationState>());
+            brain.ReturnToFormationViaEntry();
         }
     }
 }

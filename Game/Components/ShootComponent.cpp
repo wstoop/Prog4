@@ -60,8 +60,11 @@ namespace dae
             pos.y + spriteHalfH - bulletHalfH,
             dirX, dirY, m_speed);
 
-        if(GetOwner()->GetComponent<dae::LivesComponent>() != nullptr)
+        if (GetOwner()->GetComponent<dae::LivesComponent>() != nullptr)
 		    EventManager::GetInstance().SendEvent(EVENT_PLAYER_SHOT);
+        else
+            EventManager::GetInstance().SendEvent(
+                std::make_unique<DataEvent<ActorEvent>>(DATEVENT_ENEMY_SHOT, ActorEvent{ GetOwner() }));
     }
 
     void ShootComponent::Update()

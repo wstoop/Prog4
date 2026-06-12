@@ -13,6 +13,8 @@ namespace dae
 
         void Play(sound_id id, float volume) override;
         void RegisterSound(sound_id id, const std::string& path) override;
+        void SetMuted(bool muted) override;
+        bool IsMuted() const override;
 
     private:
         struct Impl;

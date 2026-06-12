@@ -20,6 +20,11 @@ SDL_Texture* dae::Texture2D::GetSDLTexture() const
 	return m_texture;
 }
 
+void dae::Texture2D::SetColorMod(unsigned char r, unsigned char g, unsigned char b)
+{
+	SDL_SetTextureColorMod(m_texture, r, g, b);
+}
+
 dae::Texture2D::Texture2D(const std::string &fullPath)
 {
     SDL_Surface* surface = SDL_LoadPNG(fullPath.c_str());

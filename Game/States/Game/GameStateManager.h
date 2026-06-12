@@ -49,7 +49,7 @@ namespace dae
             case EVENT_LOAD_END:    SetState(m_endState.get());    break;
 			case EVENT_GAME_OVER:   SetState(m_endState.get());    break;
             case EVENT_LOAD_HIGHSCORE: SetState(m_highScoreState.get()); break;
-			case EVENT_ENEMY_DIED:  m_sharedData.ShotsHit++; break;
+			case EVENT_PLAYER_DAMAGED_ENEMY: m_sharedData.ShotsHit++; break;
 			case EVENT_PLAYER_SHOT: m_sharedData.ShotsFired++; break;
             }
 

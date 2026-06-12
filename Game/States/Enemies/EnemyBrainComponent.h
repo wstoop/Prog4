@@ -13,6 +13,10 @@ namespace dae {
 
         void TransitionTo(std::unique_ptr<IEnemyState> next);
 
+        // Sends the enemy back into formation via a top-entry loop (EnteringState),
+        // targeting its formation slot. Used when dive/attack states finish.
+        void ReturnToFormationViaEntry();
+
         // Formation parent
         GameObject* GetFormationParent() const { return m_formationParent; }
         void             SetFormationParent(GameObject* p) { m_formationParent = p; }

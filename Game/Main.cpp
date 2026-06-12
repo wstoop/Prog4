@@ -15,6 +15,9 @@
 #include "Sound/SDLSoundSystem.h"
 #include "SoundID.h"
 #include "States/Game/GameStateManager.h"
+#include "Input/InputManager.h"
+#include "Commands/SkipWaveCommand.h"
+#include "Commands/ToggleMuteCommand.h"
 #include <filesystem>
 namespace fs = std::filesystem;
 
@@ -36,6 +39,12 @@ static void load()
     ss.RegisterSound(SOUND_BOSS_HIT_2, "Boss_Hit_Twice.mp3");
 
     static dae::GameStateManager gameStateManager;
+
+    // Debug: F1 kills all enemies in the current wave (forcing the next wave to spawn),
+    // F2 toggles all game audio on/off.
+    auto& input = dae::InputManager::GetInstance();
+    input.BindCommand(SDL_SCANCODE_F1, dae::KeyState::Down, std::make_unique<SkipWaveCommand>());
+    input.BindCommand(SDL_SCANCODE_F2, dae::KeyState::Down, std::make_unique<ToggleMuteCommand>());
 }
 
 int main(int, char*[]) {

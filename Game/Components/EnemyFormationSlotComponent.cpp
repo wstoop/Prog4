@@ -32,7 +32,7 @@ void dae::EnemyFormationSlotComponent::NotifyIfDied()
 {
     if (m_notifiedDeath) return;
     m_notifiedDeath = true;
-    m_formation->NotifyDied();
+    m_formation->NotifyDied(m_active);
 }
 
 glm::vec3 dae::EnemyFormationSlotComponent::ComputeSway() const

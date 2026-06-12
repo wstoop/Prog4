@@ -40,6 +40,7 @@ struct SceneInputBinding
         dae::GameObject* playerPtr = nullptr;
         PlayerConfig     config;
         uint32_t         controllerID = UINT32_MAX;
+        bool             controlsBoss = false;
     };
 
     std::vector<PlayerBinding> players;
@@ -64,6 +65,7 @@ struct BuildResult
     std::vector<dae::GameObject*> playerPtrs;
     SceneInputBinding inputBinding;
     dae::GameObject* menuStartingButton{ nullptr };
+    dae::GameObject* bossPtr{ nullptr };
 };
 
 
@@ -77,6 +79,7 @@ public:
     SceneBuilder& WithBackground(const std::string& textureFile,
         float screenW = 600.f, float screenH = 830.f);
     SceneBuilder& WithEnemies(const std::string& formationFile = "formation1.txt");
+    SceneBuilder& WithPlayerControlledBoss();
     SceneBuilder& WithPlayer(const PlayerConfig& cfg);
     SceneBuilder& WithHUDForPlayer(int playerIndex);
     SceneBuilder& WithMenuButtons();
@@ -88,6 +91,7 @@ private:
     //All of these are helper functions to add required things to a scene
     void SpawnBackground(dae::Scene& scene) const;
     void SpawnEnemies(dae::Scene& scene) const;
+    void SpawnPlayerControlledBoss(dae::Scene& scene) const;
     dae::GameObject* SpawnPlayer(dae::Scene& scene, const PlayerConfig& cfg) const;
     void SpawnMenuButtons(dae::Scene& scene, SceneInputBinding& binding);
     void SpawnHUD(dae::Scene& scene, dae::GameObject* playerPtr, int playerIndex) const;
@@ -103,6 +107,9 @@ private:
     std::string m_formationFile = "formation1.txt";
     std::vector<PlayerConfig> m_players;
     std::vector<int> m_hudPlayerIndices;
+
+    bool m_playerControlledBoss = false;
+    mutable dae::GameObject* m_pBossPtr{ nullptr };
 
     bool m_hasMenuButtons = false;
     bool m_hasNextButton = false;

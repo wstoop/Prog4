@@ -2,8 +2,9 @@
 
 #include "Components/AnimationComponent.h"
 #include "Components/HitboxComponent.h"
-#include "Components/HealthComponent.h"
+#include "Components/EnemyHealthComponent.h"
 #include "Components/EnemyDataComponent.h"
+#include "Components/TractorBeamComponent.h"
 #include "Components/BulletComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/ShootComponent.h"
@@ -43,6 +44,13 @@ void dae::EnemyFactory::RegisterDefaults()
             center.x += anim->GetSize().x / 2.f;
             center.y += anim->GetSize().y / 2.f;
             ExplosionPool::GetInstance().ActivateExplosion(center);
+
+            if (auto* data = self->GetComponent<dae::EnemyDataComponent>())
+            {
+                if (auto* evilShip = data->GetEvilShip())
+                    evilShip->m_destroy = true;
+            }
+
             self->m_destroy = true;
         };
 
@@ -57,12 +65,12 @@ void dae::EnemyFactory::RegisterDefaults()
         {
             auto e = std::make_unique<dae::GameObject>();
             e->AddComponent<dae::AnimationComponent>("beeIdle.png", 2, 1, 0.2f);
-            e->AddComponent<dae::HitboxComponent>(13.f * 3, 11.f * 3);
             e->AddComponent<dae::ShootComponent>(600.f);
+            e->AddComponent<dae::HitboxComponent>(13.f * 3, 11.f * 3);
             e->AddComponent<dae::EnemyDataComponent>(50);
             e->GetComponent<EnemyDataComponent>()->SetHitSound(SOUND_ENEMY_HIT);
             e->GetComponent<EnemyDataComponent>()->SetCombatStateFactory([] { return std::make_unique<BeeDiveBombState>(); });
-            auto* hp = e->AddComponent<dae::HealthComponent>(1.f);
+            auto* hp = e->AddComponent<dae::EnemyHealthComponent>(1.f);
             hp->SetDamageFilter(DamageFilter);
             hp->RegisterDeathCallback(DeathCallback);
             e->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100, -100, 0 });
@@ -74,11 +82,12 @@ void dae::EnemyFactory::RegisterDefaults()
         {
             auto e = std::make_unique<dae::GameObject>();
             e->AddComponent<dae::AnimationComponent>("butterflyIdle.png", 2, 1, 0.2f);
+            e->AddComponent<dae::ShootComponent>(600.f);
             e->AddComponent<dae::HitboxComponent>(13.f * 3, 10.f * 3);
             e->AddComponent<dae::EnemyDataComponent>(80);
             e->GetComponent<EnemyDataComponent>()->SetHitSound(SOUND_ENEMY_HIT);
             e->GetComponent<EnemyDataComponent>()->SetCombatStateFactory([] { return std::make_unique<ButterflyDiveBombState>(); });
-            auto* hp = e->AddComponent<dae::HealthComponent>(1.f);
+            auto* hp = e->AddComponent<dae::EnemyHealthComponent>(1.f);
             hp->SetDamageFilter(DamageFilter);
             hp->RegisterDeathCallback(DeathCallback);
             e->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100, -100, 0 });
@@ -90,13 +99,15 @@ void dae::EnemyFactory::RegisterDefaults()
         {
             auto e = std::make_unique<dae::GameObject>();
             e->AddComponent<dae::AnimationComponent>("birdIdle.png", 2, 2, 0.2f);
+            e->AddComponent<dae::ShootComponent>(600.f);
             e->AddComponent<dae::HitboxComponent>(15.f * 3, 16.f * 3);
             e->AddComponent<dae::EnemyDataComponent>(150);
             e->GetComponent<EnemyDataComponent>()->SetBossHitSounds(SOUND_BOSS_HIT_1, SOUND_BOSS_HIT_2);
             e->GetComponent<EnemyDataComponent>()->SetHitSound(SOUND_ENEMY_HIT);
             e->GetComponent<EnemyDataComponent>()->SetCombatStateFactory([] { return std::make_unique<BossAttackDecideState>(); });
             e->GetComponent<dae::EnemyDataComponent>()->SetBoss();
-            auto* hp = e->AddComponent<dae::HealthComponent>(2.f);
+            e->AddComponent<dae::TractorBeamComponent>();
+            auto* hp = e->AddComponent<dae::EnemyHealthComponent>(2.f);
             hp->SetDamageFilter(DamageFilter);
             hp->RegisterDeathCallback(DeathCallback);
             e->GetComponent<dae::TransformComponent>()->SetLocalPosition({ -100, -100, 0 });
